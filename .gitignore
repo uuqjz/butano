@@ -15,3 +15,5 @@ build/
 *.config
 *.cflags
 *.cxxflags
+__MACOSX/
+.DS_Store
