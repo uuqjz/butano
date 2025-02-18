@@ -77,20 +77,11 @@ namespace
     }
 
     constexpr int DISTANCE = 3;
-    constexpr int PAUSE_THRESHOLD = 15;
+    constexpr float JUMP_VELOCITY = -10;
+    constexpr float GRAVITY = 0.5;
+    constexpr float AIR_RESISTANCE = 0.9;
+    constexpr int GROUND_LEVEL = 50;
 
-    void move_sprite(bn::sprite_ptr& sprite, bn::keypad::key_type key, int dx, int dy, int& pause) {
-        if(pause == 0){
-            if (bn::keypad::pressed(key) || bn::keypad::held(key)) {
-                sprite.set_position(sprite.x() + dx, sprite.y() + dy);
-                pause = PAUSE_THRESHOLD;
-            }
-        }
-        else {
-            pause--;
-        }
-        
-    }
 }
 
 int main()
@@ -106,20 +97,42 @@ int main()
         bn::core::update();
     }
     
-    bn::sprite_ptr sprite = bn::sprite_items::a_button.create_sprite(0, 0);
+    bn::sprite_ptr sprite = bn::sprite_items::a_button.create_sprite(0, 50);
 
-    int pauseUp = PAUSE_THRESHOLD;
-    int pauseDown = PAUSE_THRESHOLD;
-    int pauseULeft = PAUSE_THRESHOLD;
-    int pauseRight = PAUSE_THRESHOLD;
+    float velocity_x = 0.0f;
+    float velocity_y = 0.0f;
+    bool is_on_ground = true;
+
     while (true) {
-        move_sprite(sprite, bn::keypad::key_type::UP, 0, -DISTANCE, pauseUp);
-        move_sprite(sprite, bn::keypad::key_type::DOWN, 0, DISTANCE, pauseDown);
-        move_sprite(sprite, bn::keypad::key_type::LEFT, -DISTANCE, 0, pauseULeft);
-        move_sprite(sprite, bn::keypad::key_type::RIGHT, DISTANCE, 0, pauseRight);
-        if(bn::keypad::start_pressed()){
-            sprite.set_position(0,0);
+        if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
+            velocity_x = -DISTANCE;
         }
+
+        else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {
+            velocity_x = DISTANCE;
+        }
+
+        else {
+            velocity_x *= is_on_ground ? 0.0f : AIR_RESISTANCE;
+        }
+
+        if (bn::keypad::pressed(bn::keypad::key_type::A) && is_on_ground) {
+            velocity_y = JUMP_VELOCITY;
+            is_on_ground = false;
+        }
+
+        if (!is_on_ground) {
+            velocity_y += GRAVITY;
+        }
+
+        sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
+
+        if (sprite.y() >= GROUND_LEVEL) {
+            sprite.set_y(GROUND_LEVEL);
+            is_on_ground = true;
+            velocity_y = 0;
+        }
+
         bn::core::update();
     }
 }
