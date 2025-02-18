@@ -13,6 +13,9 @@
 #include "common_info.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "bn_sprite_ptr.h"
+#include "bn_sprite_items_a_button.h"
+
 namespace
 {
     struct sram_data
@@ -72,6 +75,23 @@ namespace
             bn::core::update();
         }
     }
+
+    constexpr int DISTANCE = 3;
+    constexpr int HELD_THRESHOLD = 15;
+
+    void move_sprite(bn::sprite_ptr& sprite, bn::keypad::key_type key, int dx, int dy, int& held) {
+        if (bn::keypad::pressed(key)) {
+            sprite.set_position(sprite.x() + dx, sprite.y() + dy);
+            held = 0;
+        } else if (bn::keypad::held(key)) {
+            if (++held == HELD_THRESHOLD) {
+                sprite.set_position(sprite.x() + dx, sprite.y() + dy);
+                held = 0;
+            }
+        } else if (bn::keypad::released(key)) {
+            held = 0;
+        }
+    }
 }
 
 int main()
@@ -81,8 +101,23 @@ int main()
     bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
     bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
 
-    while(true){
+    int i = 0;
+    while(i++<2){
         sram(text_generator);
+        bn::core::update();
+    }
+    
+    bn::sprite_ptr sprite = bn::sprite_items::a_button.create_sprite(0, 0);
+
+    int held = 0;
+    while (true) {
+        move_sprite(sprite, bn::keypad::key_type::UP, 0, -DISTANCE, held);
+        move_sprite(sprite, bn::keypad::key_type::DOWN, 0, DISTANCE, held);
+        move_sprite(sprite, bn::keypad::key_type::LEFT, -DISTANCE, 0, held);
+        move_sprite(sprite, bn::keypad::key_type::RIGHT, DISTANCE, 0, held);
+        if(bn::keypad::start_pressed()){
+            sprite.set_position(0,0);
+        }
         bn::core::update();
     }
 }
