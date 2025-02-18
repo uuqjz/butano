@@ -81,6 +81,8 @@ namespace
     constexpr float GRAVITY = 0.5;
     constexpr float AIR_RESISTANCE = 0.95;
     constexpr int GROUND_LEVEL = 50;
+    constexpr float BOUNCE_FACTOR = 0.75f;
+    constexpr float MIN_BOUNCE_VELOCITY = 1.0f;
 
 }
 
@@ -91,7 +93,7 @@ int main()
     bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
     bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
     
-    bn::sprite_ptr sprite = bn::sprite_items::a_button.create_sprite(0, 50);
+    bn::sprite_ptr sprite = bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL);
 
     float velocity_x = 0.0f;
     float velocity_y = 0.0f;
@@ -123,8 +125,13 @@ int main()
 
         if (sprite.y() >= GROUND_LEVEL) {
             sprite.set_y(GROUND_LEVEL);
-            is_on_ground = true;
-            velocity_y = 0;
+
+            if (abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
+                velocity_y = -velocity_y * BOUNCE_FACTOR;
+            } else {
+                velocity_y = 0;
+                is_on_ground = true;
+            }
         }
 
         bn::core::update();
