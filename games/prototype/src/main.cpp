@@ -79,7 +79,7 @@ namespace
     constexpr int DISTANCE = 3;
     constexpr float JUMP_VELOCITY = -10;
     constexpr float GRAVITY = 0.5;
-    constexpr float AIR_RESISTANCE = 0.9;
+    constexpr float AIR_RESISTANCE = 0.95;
     constexpr int GROUND_LEVEL = 50;
 
 }
