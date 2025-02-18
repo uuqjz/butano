@@ -90,12 +90,6 @@ int main()
 
     bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
     bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
-
-    int i = 0;
-    while(i++<2){
-        sram(text_generator);
-        bn::core::update();
-    }
     
     bn::sprite_ptr sprite = bn::sprite_items::a_button.create_sprite(0, 50);
 
