@@ -87,57 +87,57 @@ namespace
         bool lookingRight = true;
 
         Player(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {}
-    };
 
-        void movePlayer(Player& player, bool bounce){
-        if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
-            player.velocity_x = -DISTANCE;
-        }
+        void move(bool bounce){
+            if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
+                velocity_x = -DISTANCE;
+            }
 
-        else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {
-            player.velocity_x = DISTANCE;
-        }
+            else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {
+                velocity_x = DISTANCE;
+            }
 
-        else {
-            player.velocity_x *= player.is_on_ground ? 0.0f : AIR_RESISTANCE;
-        }
+            else {
+                velocity_x *= is_on_ground ? 0.0f : AIR_RESISTANCE;
+            }
 
-        if (bn::keypad::pressed(bn::keypad::key_type::A) && player.is_on_ground) {
-            player.velocity_y = JUMP_VELOCITY;
-            player.is_on_ground = false;
-        }
+            if (bn::keypad::pressed(bn::keypad::key_type::A) && is_on_ground) {
+                velocity_y = JUMP_VELOCITY;
+                is_on_ground = false;
+            }
 
-        if (!player.is_on_ground) {
-            player.velocity_y += GRAVITY;
-        }
+            if (!is_on_ground) {
+                velocity_y += GRAVITY;
+            }
 
-        player.sprite.set_position(player.sprite.x() + player.velocity_x, player.sprite.y() + player.velocity_y);
+            sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
 
-        if(abs(player.velocity_x) > 0){
-            player.lookingRight = player.velocity_x > 0;
-            player.sprite.set_horizontal_flip(!player.lookingRight);
-        }
+            if(abs(velocity_x) > 0){
+                lookingRight = velocity_x > 0;
+                sprite.set_horizontal_flip(!lookingRight);
+            }
 
-        if(player.lookingRight)
-        {
-            player.palette.set_fade(bn::colors::red, 0.5);
-        }
-        else
-        {   
-            player.palette.set_fade(bn::colors::orange, 0.5);
-        }
+            if(lookingRight)
+            {
+                palette.set_fade(bn::colors::red, 0.5);
+            }
+            else
+            {   
+                palette.set_fade(bn::colors::orange, 0.5);
+            }
 
-        if (player.sprite.y() >= GROUND_LEVEL) {
-            player.sprite.set_y(GROUND_LEVEL);
+            if (sprite.y() >= GROUND_LEVEL) {
+                sprite.set_y(GROUND_LEVEL);
 
-            if (bounce && abs(player.velocity_y) > MIN_BOUNCE_VELOCITY) {
-                player.velocity_y = -player.velocity_y * BOUNCE_FACTOR;
-            } else {
-                player.velocity_y = 0;
-                player.is_on_ground = true;
+                if (bounce && abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
+                    velocity_y = -velocity_y * BOUNCE_FACTOR;
+                } else {
+                    velocity_y = 0;
+                    is_on_ground = true;
+                }
             }
         }
-    }
+    };
 
     constexpr int MAX_BULLETS = 5;
     constexpr float BULLET_SPEED = 2.0f;
@@ -248,7 +248,7 @@ int main()
             writeSram(bounce);
         }
 
-        movePlayer(player,bounce);
+        player.move(bounce);
 
         handleBullets(bullets,player);
 
