@@ -71,18 +71,18 @@ namespace
     }
 
     constexpr int DISTANCE = 3;
-    constexpr float JUMP_VELOCITY = -10;
-    constexpr float GRAVITY = 0.5;
-    constexpr float AIR_RESISTANCE = 0.95;
+    constexpr bn::fixed JUMP_VELOCITY = -10;
+    constexpr bn::fixed GRAVITY = 0.5;
+    constexpr bn::fixed AIR_RESISTANCE = 0.95;
     constexpr int GROUND_LEVEL = 50;
-    constexpr float BOUNCE_FACTOR = 0.75f;
-    constexpr float MIN_BOUNCE_VELOCITY = 1.0f;
+    constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
+    constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
 
     struct Player {
         bn::sprite_ptr sprite;
         bn::sprite_palette_ptr palette;
-        float velocity_x = 0.0f;
-        float velocity_y = 0.0f;
+        bn::fixed velocity_x = 0.0f;
+        bn::fixed velocity_y = 0.0f;
         bool is_on_ground = true;
         bool lookingRight = true;
 
@@ -140,14 +140,14 @@ namespace
     };
 
     constexpr int MAX_BULLETS = 5;
-    constexpr float BULLET_SPEED = 2.0f;
+    constexpr bn::fixed BULLET_SPEED = 2.0f;
     constexpr int MAX_BULLET_DISTANCE = 100;
 
     struct Bullet {
         bn::sprite_ptr sprite;
         bool active = false;
         bn::fixed start_x = 0.0f;
-        float velocity_x = 0.0f;
+        bn::fixed velocity_x = 0.0f;
     };
 
     void handleBullets(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player){
@@ -174,7 +174,7 @@ namespace
             }
         }
     }
-    constexpr float HIT_POINT_SCALE = 0.75f;
+    constexpr bn::fixed HIT_POINT_SCALE = 0.75f;
 
     struct Enemy {
         bn::sprite_ptr sprite;
