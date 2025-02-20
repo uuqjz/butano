@@ -78,6 +78,67 @@ namespace
     constexpr float BOUNCE_FACTOR = 0.75f;
     constexpr float MIN_BOUNCE_VELOCITY = 1.0f;
 
+    struct Player {
+        bn::sprite_ptr sprite;
+        bn::sprite_palette_ptr palette;
+        float velocity_x = 0.0f;
+        float velocity_y = 0.0f;
+        bool is_on_ground = true;
+        bool lookingRight = true;
+
+        Player(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {}
+    };
+
+        void movePlayer(Player& player, bool bounce){
+        if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
+            player.velocity_x = -DISTANCE;
+        }
+
+        else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {
+            player.velocity_x = DISTANCE;
+        }
+
+        else {
+            player.velocity_x *= player.is_on_ground ? 0.0f : AIR_RESISTANCE;
+        }
+
+        if (bn::keypad::pressed(bn::keypad::key_type::A) && player.is_on_ground) {
+            player.velocity_y = JUMP_VELOCITY;
+            player.is_on_ground = false;
+        }
+
+        if (!player.is_on_ground) {
+            player.velocity_y += GRAVITY;
+        }
+
+        player.sprite.set_position(player.sprite.x() + player.velocity_x, player.sprite.y() + player.velocity_y);
+
+        if(abs(player.velocity_x) > 0){
+            player.lookingRight = player.velocity_x > 0;
+            player.sprite.set_horizontal_flip(!player.lookingRight);
+        }
+
+        if(player.lookingRight)
+        {
+            player.palette.set_fade(bn::colors::red, 0.5);
+        }
+        else
+        {   
+            player.palette.set_fade(bn::colors::orange, 0.5);
+        }
+
+        if (player.sprite.y() >= GROUND_LEVEL) {
+            player.sprite.set_y(GROUND_LEVEL);
+
+            if (bounce && abs(player.velocity_y) > MIN_BOUNCE_VELOCITY) {
+                player.velocity_y = -player.velocity_y * BOUNCE_FACTOR;
+            } else {
+                player.velocity_y = 0;
+                player.is_on_ground = true;
+            }
+        }
+    }
+
     constexpr int MAX_BULLETS = 5;
     constexpr float BULLET_SPEED = 2.0f;
     constexpr int MAX_BULLET_DISTANCE = 100;
@@ -89,96 +150,15 @@ namespace
         float velocity_x = 0.0f;
     };
 
-}
-
-int main()
-{
-    bn::core::init();
-
-    bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
-    bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
-    
-    bn::sprite_ptr sprite = bn::sprite_items::down_button.create_sprite(0, GROUND_LEVEL);
-    bn::sprite_palette_ptr sprite_palette = sprite.palette();
-
-    bn::vector<Bullet, MAX_BULLETS> bullets;
-
-    for(int i = 0; i < MAX_BULLETS; i++) {
-        bullets.push_back({bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL), false, 0.0f, 0.0f});
-        bullets[i].sprite.set_scale(0.25);
-        bullets[i].sprite.set_visible(false);
-    }
-
-
-    float velocity_x = 0.0f;
-    float velocity_y = 0.0f;
-    bool is_on_ground = true;
-    bool bounce = readSram();
-
-    bool lookingRight=true;
-
-    while (true) {
-        if(bn::keypad::start_pressed()){
-            bounce = !bounce;
-            writeSram(bounce);
-        }
-
-        if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
-            velocity_x = -DISTANCE;
-        }
-
-        else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {
-            velocity_x = DISTANCE;
-        }
-
-        else {
-            velocity_x *= is_on_ground ? 0.0f : AIR_RESISTANCE;
-        }
-
-        if (bn::keypad::pressed(bn::keypad::key_type::A) && is_on_ground) {
-            velocity_y = JUMP_VELOCITY;
-            is_on_ground = false;
-        }
-
-        if (!is_on_ground) {
-            velocity_y += GRAVITY;
-        }
-
-        sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
-
-        if(abs(velocity_x) > 0){
-            lookingRight = velocity_x > 0;
-            sprite.set_horizontal_flip(!lookingRight);
-        }
-
-        if(lookingRight)
-        {
-            sprite_palette.set_fade(bn::colors::red, 0.5);
-        }
-        else
-        {   
-            sprite_palette.set_fade(bn::colors::orange, 0.5);
-        }
-
-        if (sprite.y() >= GROUND_LEVEL) {
-            sprite.set_y(GROUND_LEVEL);
-
-            if (bounce && abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
-                velocity_y = -velocity_y * BOUNCE_FACTOR;
-            } else {
-                velocity_y = 0;
-                is_on_ground = true;
-            }
-        }
-
+    void handleBullets(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player){
         if (bn::keypad::pressed(bn::keypad::key_type::B)) {
             for (auto& bullet : bullets) {
                 if (!bullet.active) {
                     bullet.active = true;
                     bullet.sprite.set_visible(true);
-                    bullet.start_x = sprite.x();
-                    bullet.sprite.set_position(sprite.x(), sprite.y());
-                    bullet.velocity_x = lookingRight ? BULLET_SPEED : -BULLET_SPEED;
+                    bullet.start_x = player.sprite.x();
+                    bullet.sprite.set_position(player.sprite.x(), player.sprite.y());
+                    bullet.velocity_x = player.lookingRight ? BULLET_SPEED : -BULLET_SPEED;
                     break;
                 }
             }
@@ -193,6 +173,38 @@ int main()
                 }
             }
         }
+    }
+
+}
+
+int main()
+{
+    bn::core::init();
+
+    bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
+    bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
+    
+    bn::vector<Bullet, MAX_BULLETS> bullets;
+
+    for(int i = 0; i < MAX_BULLETS; i++) {
+        bullets.push_back({bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL), false, 0.0f, 0.0f});
+        bullets[i].sprite.set_scale(0.25);
+        bullets[i].sprite.set_visible(false);
+    }
+
+    Player player = {bn::sprite_items::down_button.create_sprite(0, GROUND_LEVEL)};
+
+    bool bounce = readSram();
+
+    while (true) {
+        if(bn::keypad::start_pressed()){
+            bounce = !bounce;
+            writeSram(bounce);
+        }
+
+        movePlayer(player,bounce);
+
+        handleBullets(bullets,player);
 
         bn::core::update();
     }
