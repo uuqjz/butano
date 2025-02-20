@@ -10,7 +10,7 @@
 #include "bn_sprite_text_generator.h"
 #include "bn_keypad.h"
 #include "bn_math.h"
-
+#include "bn_log.h"
 
 #include "common_info.h"
 #include "common_variable_8x16_sprite_font.h"
@@ -174,6 +174,48 @@ namespace
             }
         }
     }
+    constexpr float HIT_POINT_SCALE = 0.75f;
+
+    struct Enemy {
+        bn::sprite_ptr sprite;
+        bn::sprite_palette_ptr palette;
+        int hit_points = 3;
+
+        Enemy(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {
+            sprite.set_scale(HIT_POINT_SCALE * hit_points);
+        }
+    };
+
+    void hitDetection(bn::vector<Enemy,2>& enemies, bn::vector<Bullet, MAX_BULLETS>& bullets){
+        for (auto& bullet : bullets) {
+            if (bullet.active) {
+                for (int i = 0; i < enemies.size(); i++) {
+                    auto& enemy = enemies[i];
+
+                    bn::fixed bullet_radius = (bullet.sprite.shape_size().width() / 2) * bullet.sprite.horizontal_scale();
+                    bn::fixed enemy_radius = (enemy.sprite.shape_size().width() / 2) * enemy.sprite.horizontal_scale();
+                    bn::fixed max_distance = bullet_radius + enemy_radius;
+
+                    bn::fixed distanceX = enemy.sprite.x() - bullet.sprite.x();
+                    bn::fixed distanceY = enemy.sprite.y() - bullet.sprite.y();
+                    bn::fixed distance = bn::sqrt(distanceX * distanceX + distanceY * distanceY);
+
+                    if (distance < max_distance) {
+                        enemy.hit_points--;
+                        bullet.active = false;
+                        bullet.sprite.set_visible(false);
+
+                        if (enemy.hit_points == 0) {
+                            enemies.erase(enemies.begin() + i);
+                            i--;
+                        } else {
+                            enemy.sprite.set_scale(HIT_POINT_SCALE * enemy.hit_points);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 }
 
@@ -194,6 +236,10 @@ int main()
 
     Player player = {bn::sprite_items::down_button.create_sprite(0, GROUND_LEVEL)};
 
+    bn::vector<Enemy,2> enemies;
+    enemies.push_back({bn::sprite_items::a_button.create_sprite(-100, GROUND_LEVEL)});
+    enemies.push_back({bn::sprite_items::a_button.create_sprite(+100, GROUND_LEVEL)});
+
     bool bounce = readSram();
 
     while (true) {
@@ -205,6 +251,8 @@ int main()
         movePlayer(player,bounce);
 
         handleBullets(bullets,player);
+
+        hitDetection(enemies,bullets);
 
         bn::core::update();
     }
