@@ -187,7 +187,7 @@ int main()
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
     for(int i = 0; i < MAX_BULLETS; i++) {
-        bullets.push_back({bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL), false, 0.0f, 0.0f});
+        bullets.push_back({bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL)});
         bullets[i].sprite.set_scale(0.25);
         bullets[i].sprite.set_visible(false);
     }
