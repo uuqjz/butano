@@ -112,7 +112,7 @@ namespace
 
             sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
 
-            if(abs(velocity_x) > 0){
+            if(bn::abs(velocity_x) > 0){
                 lookingRight = velocity_x > 0;
                 sprite.set_horizontal_flip(!lookingRight);
             }
@@ -129,7 +129,7 @@ namespace
             if (sprite.y() >= GROUND_LEVEL) {
                 sprite.set_y(GROUND_LEVEL);
 
-                if (bounce && abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
+                if (bounce && bn::abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
                     velocity_y = -velocity_y * BOUNCE_FACTOR;
                 } else {
                     velocity_y = 0;
