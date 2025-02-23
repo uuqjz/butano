@@ -171,7 +171,7 @@ namespace
         }
     }
 
-    bool hit(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
+    bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
         bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();
         bn::fixed objectB_radius = (objectB.shape_size().width() / 2) * objectB.horizontal_scale();
         bn::fixed max_distance = (objectA_radius + objectB_radius) * (objectA_radius + objectB_radius);
@@ -196,30 +196,6 @@ namespace
         Enemy(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {
             sprite.set_scale(HIT_POINT_SCALE * hit_points);
         }
-
-        void moveToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
-            bool direction = player.sprite.x() > sprite.x();
-            int steps = SPEED * (direction ? 1 : -1);
-
-            sprite.set_x(sprite.x() + steps);
-
-            bool hitSomething = hit(sprite,player.sprite);
-
-            if(!hitSomething){
-                for(auto& enemy : enemies){
-                    if(&enemy!=this){
-                        if(hit(sprite,enemy.sprite)){
-                            hitSomething = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if(hitSomething){
-                sprite.set_x(sprite.x() - steps);
-            }
-        }
     };
 
     void bulletHitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<Bullet, MAX_BULLETS>& bullets, int& framesBeforeRespawn){
@@ -228,7 +204,7 @@ namespace
                 for (int i = 0; i < enemies.size(); i++) {
                     auto& enemy = enemies[i];
 
-                    if (hit(bullet.sprite,enemy.sprite)) {
+                    if (collision(bullet.sprite,enemy.sprite)) {
                         enemy.hit_points--;
                         bullet.active = false;
                         bullet.sprite.set_visible(false);
@@ -246,6 +222,49 @@ namespace
         }
     }
 
+    bool isColliding(Enemy& enemy, Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies) {
+        if (collision(enemy.sprite, player.sprite)) {
+            return true;
+        }
+
+        for (auto& otherenemy : enemies) {
+            if (&enemy != &otherenemy && collision(enemy.sprite, otherenemy.sprite)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void respawnEnemies(bn::random& random, int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
+        framesBeforeRespawn++;
+        if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
+            int enemy_x;
+            Enemy new_enemy = { bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL) };
+
+            do {
+                enemy_x = random.get_int(-100, 100);
+                new_enemy.sprite.set_x(enemy_x);
+            } 
+            while (isColliding(new_enemy, player, enemies));
+
+            enemies.push_back(new_enemy);
+            framesBeforeRespawn = 0;
+        }
+    }
+
+    void moveEnemiesToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
+        for (auto& enemy : enemies){
+            bool direction = player.sprite.x() > enemy.sprite.x();
+            int steps = SPEED * (direction ? 1 : -1);
+
+            enemy.sprite.set_x(enemy.sprite.x() + steps);
+
+            if(isColliding(enemy,player,enemies)){
+                enemy.sprite.set_x(enemy.sprite.x() - steps);
+            }
+        }
+    }
 }
 
 int main()
@@ -286,15 +305,9 @@ int main()
 
         bulletHitDetection(enemies,bullets,framesBeforeRespawn);
 
-        framesBeforeRespawn++;
-        if(enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER){
-            enemies.push_back({bn::sprite_items::a_button.create_sprite(random.get_int(200)-100, GROUND_LEVEL)});
-            framesBeforeRespawn=0;
-        }
+        respawnEnemies(random,framesBeforeRespawn,player,enemies);
 
-        for (auto& enemy : enemies){
-            enemy.moveToPlayer(player,enemies);
-        }
+        moveEnemiesToPlayer(player,enemies);
 
         bn::core::update();
     }
