@@ -16,6 +16,7 @@
 #include "bn_sprite_items_a_button.h"
 #include "bn_sprite_items_down_button.h"
 #include "bn_colors.h"
+#include "bn_cameras.h"
 
 namespace
 {
@@ -73,6 +74,7 @@ namespace
     constexpr int GROUND_LEVEL = 50;
     constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
     constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
+    constexpr int CAMERA_BORDER = 100;
 
     struct Player {
         bn::sprite_ptr sprite;
@@ -84,7 +86,7 @@ namespace
 
         Player(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {}
 
-        void move(bool bounce){
+        void move(bool bounce, bn::camera_ptr& camera){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
                 velocity_x = -DISTANCE;
             }
@@ -107,6 +109,12 @@ namespace
             }
 
             sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
+
+            bool rightFromCamera = sprite.x() > camera.x();
+            if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER){
+                int delta = (rightFromCamera ? -1 : 1) * CAMERA_BORDER;
+                camera.set_x(sprite.x()+delta);
+            }
 
             if(bn::abs(velocity_x) > 0){
                 lookingRight = velocity_x > 0;
@@ -236,15 +244,16 @@ namespace
         return false;
     }
 
-    void respawnEnemies(bn::random& random, int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
+    void respawnEnemies(bn::random& random, int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
         framesBeforeRespawn++;
         if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
             int enemy_x;
             Enemy new_enemy = { bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL) };
+            new_enemy.sprite.set_camera(camera);
 
             do {
                 enemy_x = random.get_int(-100, 100);
-                new_enemy.sprite.set_x(enemy_x);
+                new_enemy.sprite.set_x(enemy_x+camera.x());
             } 
             while (isColliding(new_enemy, player, enemies));
 
@@ -273,6 +282,8 @@ int main()
 
     bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
     bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
+
+    bn::camera_ptr camera = bn::camera_ptr::create(0, 0);
     
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
@@ -280,6 +291,7 @@ int main()
         bullets.push_back({bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL)});
         bullets[i].sprite.set_scale(0.25);
         bullets[i].sprite.set_visible(false);
+        bullets[i].sprite.set_camera(camera);
     }
 
     Player player = {bn::sprite_items::down_button.create_sprite(0, GROUND_LEVEL)};
@@ -291,6 +303,11 @@ int main()
     int framesBeforeRespawn=0;
     bn::random random;
 
+    player.sprite.set_camera(camera);
+    for(auto& enemy:enemies){
+        enemy.sprite.set_camera(camera);
+    }
+
     bool bounce = readSram();
 
     while (true) {
@@ -299,13 +316,13 @@ int main()
             writeSram(bounce);
         }
 
-        player.move(bounce);
+        player.move(bounce,camera);
 
         handleBullets(bullets,player);
 
         bulletHitDetection(enemies,bullets,framesBeforeRespawn);
 
-        respawnEnemies(random,framesBeforeRespawn,player,enemies);
+        respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
 
         moveEnemiesToPlayer(player,enemies);
 
