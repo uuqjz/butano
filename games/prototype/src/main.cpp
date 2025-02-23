@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2020-2025 Gustavo Valiente gustavo.valiente@protonmail.com
- * zlib License, see LICENSE file.
- */
-
 #include "bn_core.h"
 #include "bn_sram.h"
 #include "bn_string.h"
@@ -11,6 +6,7 @@
 #include "bn_keypad.h"
 #include "bn_math.h"
 #include "bn_log.h"
+#include "bn_random.h"
 
 #include "common_info.h"
 #include "common_variable_8x16_sprite_font.h"
@@ -174,7 +170,23 @@ namespace
             }
         }
     }
-    constexpr bn::fixed HIT_POINT_SCALE = 0.75f;
+
+    bool hit(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
+        bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();
+        bn::fixed objectB_radius = (objectB.shape_size().width() / 2) * objectB.horizontal_scale();
+        bn::fixed max_distance = (objectA_radius + objectB_radius) * (objectA_radius + objectB_radius);
+
+        bn::fixed distanceX = objectB.x() - objectA.x();
+        bn::fixed distanceY = objectB.y() - objectA.y();
+        bn::fixed distance = distanceX * distanceX + distanceY * distanceY;
+
+        return (distance < max_distance); 
+    }
+
+    constexpr bn::fixed HIT_POINT_SCALE = 0.5f;
+    constexpr int MAX_ENEMIES = 2;
+    constexpr int RESPAWN_TIMER = 100;
+    constexpr int SPEED = 1;
 
     struct Enemy {
         bn::sprite_ptr sprite;
@@ -184,23 +196,39 @@ namespace
         Enemy(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {
             sprite.set_scale(HIT_POINT_SCALE * hit_points);
         }
+
+        void moveToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
+            bool direction = player.sprite.x() > sprite.x();
+            int steps = SPEED * (direction ? 1 : -1);
+
+            sprite.set_x(sprite.x() + steps);
+
+            bool hitSomething = hit(sprite,player.sprite);
+
+            if(!hitSomething){
+                for(auto& enemy : enemies){
+                    if(&enemy!=this){
+                        if(hit(sprite,enemy.sprite)){
+                            hitSomething = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if(hitSomething){
+                sprite.set_x(sprite.x() - steps);
+            }
+        }
     };
 
-    void hitDetection(bn::vector<Enemy,2>& enemies, bn::vector<Bullet, MAX_BULLETS>& bullets){
+    void bulletHitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<Bullet, MAX_BULLETS>& bullets, int& framesBeforeRespawn){
         for (auto& bullet : bullets) {
             if (bullet.active) {
                 for (int i = 0; i < enemies.size(); i++) {
                     auto& enemy = enemies[i];
 
-                    bn::fixed bullet_radius = (bullet.sprite.shape_size().width() / 2) * bullet.sprite.horizontal_scale();
-                    bn::fixed enemy_radius = (enemy.sprite.shape_size().width() / 2) * enemy.sprite.horizontal_scale();
-                    bn::fixed max_distance = bullet_radius + enemy_radius;
-
-                    bn::fixed distanceX = enemy.sprite.x() - bullet.sprite.x();
-                    bn::fixed distanceY = enemy.sprite.y() - bullet.sprite.y();
-                    bn::fixed distance = bn::sqrt(distanceX * distanceX + distanceY * distanceY);
-
-                    if (distance < max_distance) {
+                    if (hit(bullet.sprite,enemy.sprite)) {
                         enemy.hit_points--;
                         bullet.active = false;
                         bullet.sprite.set_visible(false);
@@ -208,6 +236,7 @@ namespace
                         if (enemy.hit_points == 0) {
                             enemies.erase(enemies.begin() + i);
                             i--;
+                            framesBeforeRespawn=0;
                         } else {
                             enemy.sprite.set_scale(HIT_POINT_SCALE * enemy.hit_points);
                         }
@@ -236,9 +265,12 @@ int main()
 
     Player player = {bn::sprite_items::down_button.create_sprite(0, GROUND_LEVEL)};
 
-    bn::vector<Enemy,2> enemies;
+    bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({bn::sprite_items::a_button.create_sprite(-100, GROUND_LEVEL)});
     enemies.push_back({bn::sprite_items::a_button.create_sprite(+100, GROUND_LEVEL)});
+
+    int framesBeforeRespawn=0;
+    bn::random random;
 
     bool bounce = readSram();
 
@@ -252,7 +284,17 @@ int main()
 
         handleBullets(bullets,player);
 
-        hitDetection(enemies,bullets);
+        bulletHitDetection(enemies,bullets,framesBeforeRespawn);
+
+        framesBeforeRespawn++;
+        if(enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER){
+            enemies.push_back({bn::sprite_items::a_button.create_sprite(random.get_int(200)-100, GROUND_LEVEL)});
+            framesBeforeRespawn=0;
+        }
+
+        for (auto& enemy : enemies){
+            enemy.moveToPlayer(player,enemies);
+        }
 
         bn::core::update();
     }
