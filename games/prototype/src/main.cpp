@@ -13,12 +13,12 @@
 
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_palette_ptr.h"
-#include "bn_sprite_items_a_button.h"
 #include "bn_colors.h"
 #include "bn_cameras.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ninja.h"
-#include "bn_sprite_items_hero_bomb_icon.h"
+#include "bn_sprite_items_rocket.h"
+#include "bn_sprite_items_monsters.h"
 
 namespace
 {
@@ -206,7 +206,7 @@ namespace
         return (distance < max_distance); 
     }
 
-    constexpr bn::fixed HIT_POINT_SCALE = 0.5f;
+    constexpr bn::fixed HIT_POINT_SCALE = 0.2f;
     constexpr int MAX_ENEMIES = 2;
     constexpr int RESPAWN_TIMER = 100;
     constexpr int SPEED = 1;
@@ -215,8 +215,14 @@ namespace
         bn::sprite_ptr sprite;
         bn::sprite_palette_ptr palette;
         int hit_points = 3;
+        bn::sprite_animate_action<3> animate_action;
 
-        Enemy(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {
+        Enemy(bn::sprite_ptr s, int frame_index) 
+        : sprite(s), palette(s.palette()), 
+          animate_action(bn::create_sprite_animate_action_forever(
+              s, 16, bn::sprite_items::monsters.tiles_item(),
+              frame_index, frame_index + 1, frame_index + 2)) 
+        {
             sprite.set_scale(HIT_POINT_SCALE * hit_points);
         }
     };
@@ -262,10 +268,12 @@ namespace
     void respawnEnemies(bn::random& random, int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
         framesBeforeRespawn++;
         if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
-            int enemy_x;
-            Enemy new_enemy = { bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL) };
+            int frame_index = (random.get_int(2) % 2) * 3;
+            BN_LOG(frame_index);
+            Enemy new_enemy = { bn::sprite_items::monsters.create_sprite(0, GROUND_LEVEL),frame_index};
             new_enemy.sprite.set_camera(camera);
 
+            int enemy_x;
             do {
                 enemy_x = random.get_int(-100, 100);
                 new_enemy.sprite.set_x(enemy_x+camera.x());
@@ -287,6 +295,8 @@ namespace
             if(isColliding(enemy,player,enemies)){
                 enemy.sprite.set_x(enemy.sprite.x() - steps);
             }
+
+            enemy.sprite.set_horizontal_flip(!direction);
         }
     }
 }
@@ -303,7 +313,7 @@ int main()
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
     for(int i = 0; i < MAX_BULLETS; i++) {
-        bullets.push_back({bn::sprite_items::hero_bomb_icon.create_sprite(0, GROUND_LEVEL)});
+        bullets.push_back({bn::sprite_items::rocket.create_sprite(0, GROUND_LEVEL)});
         bullets[i].sprite.set_scale(0.5);
         bullets[i].sprite.set_visible(false);
         bullets[i].sprite.set_camera(camera);
@@ -312,8 +322,8 @@ int main()
     Player player = {bn::sprite_items::ninja.create_sprite(0, GROUND_LEVEL)};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
-    enemies.push_back({bn::sprite_items::a_button.create_sprite(-100, GROUND_LEVEL)});
-    enemies.push_back({bn::sprite_items::a_button.create_sprite(+100, GROUND_LEVEL)});
+    enemies.push_back({bn::sprite_items::monsters.create_sprite(-100, GROUND_LEVEL),0});
+    enemies.push_back({bn::sprite_items::monsters.create_sprite(+100, GROUND_LEVEL),3});
 
     int framesBeforeRespawn=0;
     bn::random random;
@@ -340,6 +350,10 @@ int main()
         respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
 
         moveEnemiesToPlayer(player,enemies);
+
+        for(auto& enemy : enemies){
+            enemy.animate_action.update();
+        }
 
         player.animate_action.update();
         bn::core::update();
