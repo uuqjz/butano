@@ -87,10 +87,12 @@ namespace
         bool lookingRight = true;
         bn::sprite_animate_action<4> animate_action;
 
-        Player(bn::sprite_ptr s) 
-        : sprite(s), palette(s.palette()), animate_action(bn::create_sprite_animate_action_forever(
-                s, 16, bn::sprite_items::ninja.tiles_item(), 12, 13, 14, 15)) {
-        }
+            Player(const bn::sprite_item& sprite_item, int x, int y) 
+                : sprite(sprite_item.create_sprite(x, y)),
+                palette(sprite.palette()),
+                animate_action(bn::create_sprite_animate_action_forever(
+                      sprite, 16, sprite_item.tiles_item(), 12, 13, 14, 15)) {
+            }
 
         void move(bool bounce, bn::camera_ptr& camera){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
@@ -217,11 +219,12 @@ namespace
         int hit_points = 3;
         bn::sprite_animate_action<3> animate_action;
 
-        Enemy(bn::sprite_ptr s, int frame_index) 
-        : sprite(s), palette(s.palette()), 
-          animate_action(bn::create_sprite_animate_action_forever(
-              s, 16, bn::sprite_items::monsters.tiles_item(),
-              frame_index, frame_index + 1, frame_index + 2)) 
+        Enemy(const bn::sprite_item& sprite_item, int x, int y, int frame_index) 
+            : sprite(sprite_item.create_sprite(x, y)), 
+            palette(sprite.palette()), 
+            animate_action(bn::create_sprite_animate_action_forever(
+                  sprite, 16, sprite_item.tiles_item(),
+                  frame_index, frame_index + 1, frame_index + 2)) 
         {
             sprite.set_scale(HIT_POINT_SCALE * hit_points);
         }
@@ -270,7 +273,7 @@ namespace
         if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
             int frame_index = (random.get_int(2) % 2) * 3;
             BN_LOG(frame_index);
-            Enemy new_enemy = { bn::sprite_items::monsters.create_sprite(0, GROUND_LEVEL),frame_index};
+            Enemy new_enemy = {bn::sprite_items::monsters, 0, GROUND_LEVEL,frame_index};
             new_enemy.sprite.set_camera(camera);
 
             int enemy_x;
@@ -319,11 +322,11 @@ int main()
         bullets[i].sprite.set_camera(camera);
     }
 
-    Player player = {bn::sprite_items::ninja.create_sprite(0, GROUND_LEVEL)};
+    Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
-    enemies.push_back({bn::sprite_items::monsters.create_sprite(-100, GROUND_LEVEL),0});
-    enemies.push_back({bn::sprite_items::monsters.create_sprite(+100, GROUND_LEVEL),3});
+    enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
+    enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
 
     int framesBeforeRespawn=0;
     bn::random random;
