@@ -14,11 +14,11 @@
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_palette_ptr.h"
 #include "bn_sprite_items_a_button.h"
-#include "bn_sprite_items_down_button.h"
 #include "bn_colors.h"
 #include "bn_cameras.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ninja.h"
+#include "bn_sprite_items_hero_bomb_icon.h"
 
 namespace
 {
@@ -174,6 +174,7 @@ namespace
                 if (!bullet.active) {
                     bullet.active = true;
                     bullet.sprite.set_visible(true);
+                    bullet.sprite.set_rotation_angle(player.lookingRight ? 270 : 90);
                     bullet.start_x = player.sprite.x();
                     bullet.sprite.set_position(player.sprite.x(), player.sprite.y());
                     bullet.velocity_x = player.lookingRight ? BULLET_SPEED : -BULLET_SPEED;
@@ -302,8 +303,8 @@ int main()
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
     for(int i = 0; i < MAX_BULLETS; i++) {
-        bullets.push_back({bn::sprite_items::a_button.create_sprite(0, GROUND_LEVEL)});
-        bullets[i].sprite.set_scale(0.25);
+        bullets.push_back({bn::sprite_items::hero_bomb_icon.create_sprite(0, GROUND_LEVEL)});
+        bullets[i].sprite.set_scale(0.5);
         bullets[i].sprite.set_visible(false);
         bullets[i].sprite.set_camera(camera);
     }
