@@ -17,6 +17,8 @@
 #include "bn_sprite_items_down_button.h"
 #include "bn_colors.h"
 #include "bn_cameras.h"
+#include "bn_sprite_animate_actions.h"
+#include "bn_sprite_items_ninja.h"
 
 namespace
 {
@@ -83,8 +85,12 @@ namespace
         bn::fixed velocity_y = 0.0f;
         bool is_on_ground = true;
         bool lookingRight = true;
+        bn::sprite_animate_action<4> animate_action;
 
-        Player(bn::sprite_ptr s) : sprite(s), palette(s.palette()) {}
+        Player(bn::sprite_ptr s) 
+        : sprite(s), palette(s.palette()), animate_action(bn::create_sprite_animate_action_forever(
+                s, 16, bn::sprite_items::ninja.tiles_item(), 12, 13, 14, 15)) {
+        }
 
         void move(bool bounce, bn::camera_ptr& camera){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
@@ -116,18 +122,26 @@ namespace
                 camera.set_x(sprite.x()+delta);
             }
 
+            bool changedDirection = false;
             if(bn::abs(velocity_x) > 0){
-                lookingRight = velocity_x > 0;
-                sprite.set_horizontal_flip(!lookingRight);
+                bool lookingRightNow = velocity_x > 0;
+                if(lookingRight!=lookingRightNow){
+                    lookingRight=lookingRightNow;
+                    changedDirection = true;
+                }
             }
 
-            if(lookingRight)
-            {
-                palette.set_fade(bn::colors::red, 0.5);
-            }
-            else
-            {   
-                palette.set_fade(bn::colors::orange, 0.5);
+            if(changedDirection){
+                if(lookingRight)
+                {
+                    animate_action = bn::create_sprite_animate_action_forever(
+                    sprite, 16, bn::sprite_items::ninja.tiles_item(), 12, 13, 14, 15);
+                }
+                else
+                {   
+                    animate_action = bn::create_sprite_animate_action_forever(
+                    sprite, 16, bn::sprite_items::ninja.tiles_item(), 8, 9, 10, 11);
+                }                
             }
 
             if (sprite.y() >= GROUND_LEVEL) {
@@ -294,7 +308,7 @@ int main()
         bullets[i].sprite.set_camera(camera);
     }
 
-    Player player = {bn::sprite_items::down_button.create_sprite(0, GROUND_LEVEL)};
+    Player player = {bn::sprite_items::ninja.create_sprite(0, GROUND_LEVEL)};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({bn::sprite_items::a_button.create_sprite(-100, GROUND_LEVEL)});
@@ -326,6 +340,7 @@ int main()
 
         moveEnemiesToPlayer(player,enemies);
 
+        player.animate_action.update();
         bn::core::update();
     }
 }
