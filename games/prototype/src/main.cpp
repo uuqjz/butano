@@ -303,7 +303,7 @@ namespace
 
             enemy.sprite.set_x(enemy.sprite.x() + steps);
 
-            if (collision(enemy.sprite, player.sprite) && framesSinceLastHit > INVINCIBILITY_FRAMES){
+            if (framesSinceLastHit > INVINCIBILITY_FRAMES && collision(enemy.sprite, player.sprite)){
                 framesSinceLastHit=0;
                 if(hearts.size()>0){
                     hearts.pop_back();
