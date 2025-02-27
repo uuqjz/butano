@@ -19,6 +19,7 @@
 #include "bn_sprite_items_ninja.h"
 #include "bn_sprite_items_rocket.h"
 #include "bn_sprite_items_monsters.h"
+#include "bn_sprite_items_head.h"
 
 namespace
 {
@@ -77,6 +78,8 @@ namespace
     constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
     constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
     constexpr int CAMERA_BORDER = 100;
+    constexpr int PLAYER_HIT_POINTS = 3;
+    constexpr int INVINCIBILITY_FRAMES = 100;
 
     struct Player {
         bn::sprite_ptr sprite;
@@ -87,12 +90,12 @@ namespace
         bool lookingRight = true;
         bn::sprite_animate_action<4> animate_action;
 
-            Player(const bn::sprite_item& sprite_item, int x, int y) 
-                : sprite(sprite_item.create_sprite(x, y)),
-                palette(sprite.palette()),
-                animate_action(bn::create_sprite_animate_action_forever(
-                      sprite, 16, sprite_item.tiles_item(), 12, 13, 14, 15)) {
-            }
+        Player(const bn::sprite_item& sprite_item, int x, int y) 
+            : sprite(sprite_item.create_sprite(x, y)),
+            palette(sprite.palette()),
+            animate_action(bn::create_sprite_animate_action_forever(
+                  sprite, 16, sprite_item.tiles_item(), 12, 13, 14, 15)) {
+        }
 
         void move(bool bounce, bn::camera_ptr& camera){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
@@ -288,12 +291,20 @@ namespace
         }
     }
 
-    void moveEnemiesToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
+    void moveEnemiesToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
+        framesSinceLastHit++;
         for (auto& enemy : enemies){
             bool direction = player.sprite.x() > enemy.sprite.x();
             int steps = SPEED * (direction ? 1 : -1);
 
             enemy.sprite.set_x(enemy.sprite.x() + steps);
+
+            if (collision(enemy.sprite, player.sprite) && framesSinceLastHit > INVINCIBILITY_FRAMES){
+                framesSinceLastHit=0;
+                if(hearts.size()>0){
+                    hearts.pop_back();
+                }
+            }
 
             if(isColliding(enemy,player,enemies)){
                 enemy.sprite.set_x(enemy.sprite.x() - steps);
@@ -322,6 +333,11 @@ int main()
         bullets[i].sprite.set_camera(camera);
     }
 
+    bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS> hearts;
+    for(int i = 0; i < PLAYER_HIT_POINTS; i++){
+        hearts.push_back({bn::sprite_items::head.create_sprite(-100+(i*20), -60)});
+    }
+
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
@@ -329,6 +345,7 @@ int main()
     enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
 
     int framesBeforeRespawn=0;
+    int framesSinceLastHit=INVINCIBILITY_FRAMES;
     bn::random random;
 
     player.sprite.set_camera(camera);
@@ -338,7 +355,7 @@ int main()
 
     bool bounce = readSram();
 
-    while (true) {
+    while (hearts.size()>0) {
         if(bn::keypad::start_pressed()){
             bounce = !bounce;
             writeSram(bounce);
@@ -352,13 +369,23 @@ int main()
 
         respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
 
-        moveEnemiesToPlayer(player,enemies);
+        moveEnemiesToPlayer(player,enemies,hearts,framesSinceLastHit);
 
         for(auto& enemy : enemies){
             enemy.animate_action.update();
         }
 
         player.animate_action.update();
+        bn::core::update();
+    }
+
+    text_generator.set_center_alignment();
+
+    bn::vector<bn::sprite_ptr, 32> text_sprites;
+    text_generator.generate(0, -10, "GAME OVER", text_sprites);
+    text_generator.generate(0, 10, "PRESS START", text_sprites);
+
+    while(!bn::keypad::start_pressed()){
         bn::core::update();
     }
 }
