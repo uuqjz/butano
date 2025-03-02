@@ -74,6 +74,7 @@ namespace
     }
 
     constexpr bn::fixed BLOCK_SCALE = 0.25;
+    constexpr int MAX_BLOCKS = 32;
     struct Block {
         bn::sprite_ptr sprite;
         bn::fixed_rect rect;
@@ -115,7 +116,7 @@ namespace
             rect(sprite.position(),sprite.dimensions()) {
         }
 
-        void move(bool bounce, bn::camera_ptr& camera, bn::vector<Block, 3>& blocks){
+        void move(bool bounce, bn::camera_ptr& camera, bn::vector<Block, MAX_BLOCKS>& blocks){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
                 velocity_x = -DISTANCE;
             }
@@ -138,12 +139,48 @@ namespace
             }
 
             sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
+            bn::fixed_rect prev_rect = rect;
             rect.set_position(sprite.position());
 
-            for(auto& block:blocks){
-                if(rect.touches(block.rect)){
-                    BN_LOG("HIT");
+            bool standingOnBlock = false;
+
+            for(auto& block : blocks){
+                if(rect.touches(block.rect)){ 
+                    bool fromAbove = prev_rect.bottom() <= block.rect.top();
+                    bool fromBelow = prev_rect.top() >= block.rect.bottom();
+                    
+                    if (fromBelow) {
+                        sprite.set_y(block.rect.bottom() + sprite.dimensions().height() / 2);
+                        velocity_y = 0;
+                    }
+                    else if (fromAbove) {
+                        sprite.set_y(block.rect.top() - sprite.dimensions().height() / 2);
+                        velocity_y = 0;
+                        standingOnBlock = true;
+                    }
                 }
+
+                if(rect.intersects(block.rect)){ 
+                    bool fromLeft = prev_rect.right() <= block.rect.left();
+                    bool fromRight = prev_rect.left() >= block.rect.right();
+
+                    if (fromLeft) {
+                        sprite.set_x(block.rect.left() - sprite.dimensions().width() / 2);
+                        velocity_x = 0;
+                    }
+                    else if (fromRight) {
+                        sprite.set_x(block.rect.right() + sprite.dimensions().width() / 2);
+                        velocity_x = 0;
+                    }
+                }
+
+                rect.set_position(sprite.position());              
+            }
+
+            if(standingOnBlock){
+                is_on_ground = true;
+            } else if(sprite.y() < GROUND_LEVEL){
+                is_on_ground = false;
             }
 
             bool rightFromCamera = sprite.x() > camera.x();
@@ -377,10 +414,15 @@ int main()
 
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
-    bn::vector<Block, 3> blocks;
+    bn::vector<Block, MAX_BLOCKS> blocks;
     blocks.push_back({20,20});
     blocks.push_back({36,20});
     blocks.push_back({52,20});
+    blocks.push_back({20,36});
+    blocks.push_back({36,36});
+    blocks.push_back({52,36});
+    blocks.push_back({84,-40});
+    blocks.push_back({96,-40});
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
