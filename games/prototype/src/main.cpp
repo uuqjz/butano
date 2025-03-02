@@ -17,10 +17,12 @@
 #include "bn_cameras.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ninja.h"
+#include "bn_sprite_items_block.h"
 #include "bn_sprite_items_rocket.h"
 #include "bn_sprite_items_monsters.h"
 #include "bn_sprite_items_head.h"
 #include "bn_blending.h"
+#include "bn_fixed_rect.h"
 
 namespace
 {
@@ -90,12 +92,14 @@ namespace
         bool is_on_ground = true;
         bool lookingRight = true;
         bn::sprite_animate_action<4> animate_action;
+        bn::fixed_rect rect;
 
         Player(const bn::sprite_item& sprite_item, int x, int y) 
             : sprite(sprite_item.create_sprite(x, y)),
             palette(sprite.palette()),
             animate_action(bn::create_sprite_animate_action_forever(
-                  sprite, 16, sprite_item.tiles_item(), 12, 13, 14, 15)) {
+                  sprite, 16, sprite_item.tiles_item(), 12, 13, 14, 15)),
+            rect(sprite.position(),sprite.dimensions()) {
         }
 
         void move(bool bounce, bn::camera_ptr& camera){
@@ -121,6 +125,7 @@ namespace
             }
 
             sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
+            rect.set_position(sprite.position());
 
             bool rightFromCamera = sprite.x() > camera.x();
             if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER){
@@ -318,6 +323,18 @@ namespace
             enemy.sprite.set_horizontal_flip(!direction);
         }
     }
+
+    constexpr bn::fixed BLOCK_SCALE = 0.25;
+    struct Block {
+        bn::sprite_ptr sprite;
+        bn::fixed_rect rect;
+
+        Block(int x, int y, bn::fixed scale = BLOCK_SCALE) 
+            : sprite(bn::sprite_items::block.create_sprite(x, y)),
+              rect(sprite.x(), sprite.y(), sprite.dimensions().width() * scale, sprite.dimensions().height() * scale) {
+            sprite.set_scale(scale);
+        }
+    };
 }
 
 int main()
@@ -346,6 +363,10 @@ int main()
     }
 
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
+
+    Block block = {0, 20};
+    BN_LOG(player.rect.touches(block.rect));
+
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
