@@ -73,14 +73,27 @@ namespace
         bn::sram::write(cart_sram_data);
     }
 
+    constexpr bn::fixed BLOCK_SCALE = 0.25;
+    struct Block {
+        bn::sprite_ptr sprite;
+        bn::fixed_rect rect;
+
+        Block(int x, int y, bn::fixed scale = BLOCK_SCALE) 
+            : sprite(bn::sprite_items::block.create_sprite(x, y)),
+              rect(sprite.x(), sprite.y(), sprite.dimensions().width() * scale, sprite.dimensions().height() * scale) {
+            sprite.set_scale(scale);
+        }
+    };
+
     constexpr int DISTANCE = 3;
     constexpr bn::fixed JUMP_VELOCITY = -10;
     constexpr bn::fixed GRAVITY = 0.5;
     constexpr bn::fixed AIR_RESISTANCE = 0.95;
-    constexpr int GROUND_LEVEL = 50;
+    constexpr int GROUND_LEVEL = 60;
     constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
     constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
-    constexpr int CAMERA_BORDER = 100;
+    constexpr int CAMERA_BORDER_X = 100;
+    constexpr int CAMERA_BORDER_Y = 60;
     constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
 
@@ -102,7 +115,7 @@ namespace
             rect(sprite.position(),sprite.dimensions()) {
         }
 
-        void move(bool bounce, bn::camera_ptr& camera){
+        void move(bool bounce, bn::camera_ptr& camera, bn::vector<Block, 3>& blocks){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
                 velocity_x = -DISTANCE;
             }
@@ -127,10 +140,22 @@ namespace
             sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
             rect.set_position(sprite.position());
 
+            for(auto& block:blocks){
+                if(rect.touches(block.rect)){
+                    BN_LOG("HIT");
+                }
+            }
+
             bool rightFromCamera = sprite.x() > camera.x();
-            if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER){
-                int delta = (rightFromCamera ? -1 : 1) * CAMERA_BORDER;
+            if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER_X){
+                int delta = (rightFromCamera ? -1 : 1) * CAMERA_BORDER_X;
                 camera.set_x(sprite.x()+delta);
+            }
+
+            bool overCamera = sprite.y() < camera.y();
+            if(bn::abs(sprite.y() - camera.y()) > CAMERA_BORDER_Y){
+                int delta = (overCamera ? 1 : -1) * CAMERA_BORDER_Y;
+                camera.set_y(bn::min(bn::fixed(0), sprite.y() + delta));
             }
 
             bool changedDirection = false;
@@ -323,18 +348,6 @@ namespace
             enemy.sprite.set_horizontal_flip(!direction);
         }
     }
-
-    constexpr bn::fixed BLOCK_SCALE = 0.25;
-    struct Block {
-        bn::sprite_ptr sprite;
-        bn::fixed_rect rect;
-
-        Block(int x, int y, bn::fixed scale = BLOCK_SCALE) 
-            : sprite(bn::sprite_items::block.create_sprite(x, y)),
-              rect(sprite.x(), sprite.y(), sprite.dimensions().width() * scale, sprite.dimensions().height() * scale) {
-            sprite.set_scale(scale);
-        }
-    };
 }
 
 int main()
@@ -364,9 +377,10 @@ int main()
 
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
-    Block block = {0, 20};
-    BN_LOG(player.rect.touches(block.rect));
-
+    bn::vector<Block, 3> blocks;
+    blocks.push_back({20,20});
+    blocks.push_back({36,20});
+    blocks.push_back({52,20});
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
@@ -380,6 +394,9 @@ int main()
     for(auto& enemy:enemies){
         enemy.sprite.set_camera(camera);
     }
+    for(auto& block:blocks){
+        block.sprite.set_camera(camera);
+    }
 
     bool bounce = readSram();
 
@@ -389,7 +406,7 @@ int main()
             writeSram(bounce);
         }
 
-        player.move(bounce,camera);
+        player.move(bounce,camera,blocks);
 
         handleBullets(bullets,player);
 
@@ -397,7 +414,7 @@ int main()
 
         respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
 
-        moveEnemiesToPlayer(player,enemies,hearts,framesSinceLastHit);
+        //moveEnemiesToPlayer(player,enemies,hearts,framesSinceLastHit);
 
         for(auto& enemy : enemies){
             enemy.animate_action.update();
