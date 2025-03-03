@@ -23,6 +23,8 @@
 #include "bn_sprite_items_head.h"
 #include "bn_blending.h"
 #include "bn_fixed_rect.h"
+#include "bn_unordered_map.h"
+#include <bn_fixed_point.h>
 
 namespace
 {
@@ -73,16 +75,15 @@ namespace
         bn::sram::write(cart_sram_data);
     }
 
-    constexpr bn::fixed BLOCK_SCALE = 0.25;
     constexpr int MAX_BLOCKS = 32;
+    constexpr int BLOCK_SIZE = 16;
     struct Block {
         bn::sprite_ptr sprite;
         bn::fixed_rect rect;
 
-        Block(int x, int y, bn::fixed scale = BLOCK_SCALE) 
-            : sprite(bn::sprite_items::block.create_sprite(x, y)),
-              rect(sprite.x(), sprite.y(), sprite.dimensions().width() * scale, sprite.dimensions().height() * scale) {
-            sprite.set_scale(scale);
+        Block(int x, int y) 
+            : sprite(bn::sprite_items::block.create_sprite(x * BLOCK_SIZE, y * BLOCK_SIZE)),
+              rect(sprite.x(), sprite.y(), BLOCK_SIZE, BLOCK_SIZE) {
         }
     };
 
@@ -116,7 +117,7 @@ namespace
             rect(sprite.position(),sprite.dimensions()) {
         }
 
-        void move(bool bounce, bn::camera_ptr& camera, bn::vector<Block, MAX_BLOCKS>& blocks){
+        void move(bool bounce, bn::camera_ptr& camera, bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS>& blocks){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
                 velocity_x = -DISTANCE;
             }
@@ -144,37 +145,41 @@ namespace
 
             bool standingOnBlock = false;
 
-            for(auto& block : blocks){
-                if(rect.touches(block.rect)){ 
-                    bool fromAbove = prev_rect.bottom() <= block.rect.top();
-                    bool fromBelow = prev_rect.top() >= block.rect.bottom();
-                    
-                    if (fromBelow) {
-                        sprite.set_y(block.rect.bottom() + sprite.dimensions().height() / 2);
-                        velocity_y = 0;
+            for(auto& tile : getTiles()){
+                if(blocks.contains(tile)){
+                    auto& block = blocks.at(tile);
+
+                    if(rect.touches(block.rect)){ 
+                        bool fromAbove = prev_rect.bottom() <= block.rect.top();
+                        bool fromBelow = prev_rect.top() >= block.rect.bottom();
+
+                        if (fromBelow) {
+                            sprite.set_y(block.rect.bottom() + sprite.dimensions().height() / 2);
+                            velocity_y = 0;
+                        }
+                        else if (fromAbove) {
+                            sprite.set_y(block.rect.top() - sprite.dimensions().height() / 2);
+                            velocity_y = 0;
+                            standingOnBlock = true;
+                        }
                     }
-                    else if (fromAbove) {
-                        sprite.set_y(block.rect.top() - sprite.dimensions().height() / 2);
-                        velocity_y = 0;
-                        standingOnBlock = true;
+
+                    if(rect.intersects(block.rect)){ 
+                        bool fromLeft = prev_rect.right() <= block.rect.left();
+                        bool fromRight = prev_rect.left() >= block.rect.right();
+
+                        if (fromLeft) {
+                            sprite.set_x(block.rect.left() - sprite.dimensions().width() / 2);
+                            velocity_x = 0;
+                        }
+                        else if (fromRight) {
+                            sprite.set_x(block.rect.right() + sprite.dimensions().width() / 2);
+                            velocity_x = 0;
+                        }
                     }
+
+                    rect.set_position(sprite.position());   
                 }
-
-                if(rect.intersects(block.rect)){ 
-                    bool fromLeft = prev_rect.right() <= block.rect.left();
-                    bool fromRight = prev_rect.left() >= block.rect.right();
-
-                    if (fromLeft) {
-                        sprite.set_x(block.rect.left() - sprite.dimensions().width() / 2);
-                        velocity_x = 0;
-                    }
-                    else if (fromRight) {
-                        sprite.set_x(block.rect.right() + sprite.dimensions().width() / 2);
-                        velocity_x = 0;
-                    }
-                }
-
-                rect.set_position(sprite.position());              
             }
 
             if(standingOnBlock){
@@ -227,6 +232,22 @@ namespace
                     is_on_ground = true;
                 }
             }
+        }
+
+        bn::vector<bn::fixed_point, 9> getTiles()
+        {
+            int x0 = int(sprite.x()) / BLOCK_SIZE;
+            int y0 = int(sprite.y()) / BLOCK_SIZE;
+
+            bn::vector<bn::fixed_point, 9> tiles;
+
+            for(int x = x0 -1 ; x<= x0+1; x++){
+                for(int y = y0 -1 ; y<= y0+1; y++){
+                    tiles.push_back(bn::fixed_point(x,y));
+                }
+            }
+
+            return tiles;
         }
     };
 
@@ -395,7 +416,6 @@ int main()
     bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
     bn::blending::set_transparency_alpha(0.5);
 
-
     bn::camera_ptr camera = bn::camera_ptr::create(0, 0);
     
     bn::vector<Bullet, MAX_BULLETS> bullets;
@@ -414,19 +434,20 @@ int main()
 
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
-    bn::vector<Block, MAX_BLOCKS> blocks;
-    blocks.push_back({20,20});
-    blocks.push_back({36,20});
-    blocks.push_back({52,20});
-    blocks.push_back({20,36});
-    blocks.push_back({36,36});
-    blocks.push_back({52,36});
-    blocks.push_back({84,-40});
-    blocks.push_back({96,-40});
-
     bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
     enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
+
+    bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS> blocks;
+    blocks.insert(bn::fixed_point(-1,1),{-1,1});
+    blocks.insert(bn::fixed_point(1,1),{1,1});
+    blocks.insert(bn::fixed_point(2,1),{2,1});
+    blocks.insert(bn::fixed_point(3,1),{3,1});
+    blocks.insert(bn::fixed_point(1,2),{1,2});
+    blocks.insert(bn::fixed_point(2,2),{2,2});
+    blocks.insert(bn::fixed_point(3,2),{3,2});
+    blocks.insert(bn::fixed_point(5,-2),{5,-2});
+    blocks.insert(bn::fixed_point(6,-2),{6,-2});
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
@@ -436,7 +457,7 @@ int main()
     for(auto& enemy:enemies){
         enemy.sprite.set_camera(camera);
     }
-    for(auto& block:blocks){
+    for(auto& [position,block]:blocks){
         block.sprite.set_camera(camera);
     }
 
