@@ -87,6 +87,48 @@ namespace
         }
     };
 
+    struct BlockMap {
+        void insert(int x, int y) {
+            map.insert(bn::fixed_point(x, y), {x, y});
+        }
+
+        void erase(int x, int y) {
+            map.erase(bn::fixed_point(x, y));
+        }
+
+        void erase(bn::fixed_point& point) {
+            map.erase(point);
+        }
+
+        bool contains(int x, int y) const {
+            return map.contains(bn::fixed_point(x,y));
+        }
+
+        bool contains(bn::fixed_point& point) const {
+            return map.contains(point);
+        }
+
+        const Block& at(int x, int y) const {
+            return map.at(bn::fixed_point(x, y));
+        }
+
+        const Block& at(bn::fixed_point& point) const {
+            return map.at(point);
+        }
+
+        bn::vector<Block,MAX_BLOCKS> getAllBlocks() const {
+            bn::vector<Block,MAX_BLOCKS> blocks;
+
+            for (const auto& [key, block] : map) {
+                blocks.push_back(block);
+            }
+
+            return blocks;
+        }
+
+        bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS> map;
+    };
+
     constexpr int DISTANCE = 3;
     constexpr bn::fixed JUMP_VELOCITY = -10;
     constexpr bn::fixed GRAVITY = 0.5;
@@ -117,7 +159,7 @@ namespace
             rect(sprite.position(),sprite.dimensions()) {
         }
 
-        void move(bool bounce, bn::camera_ptr& camera, bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS>& blocks){
+        void move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
             if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
                 velocity_x = -DISTANCE;
             }
@@ -438,16 +480,17 @@ int main()
     enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
     enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
 
-    bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS> blocks;
-    blocks.insert(bn::fixed_point(-1,1),{-1,1});
-    blocks.insert(bn::fixed_point(1,1),{1,1});
-    blocks.insert(bn::fixed_point(2,1),{2,1});
-    blocks.insert(bn::fixed_point(3,1),{3,1});
-    blocks.insert(bn::fixed_point(1,2),{1,2});
-    blocks.insert(bn::fixed_point(2,2),{2,2});
-    blocks.insert(bn::fixed_point(3,2),{3,2});
-    blocks.insert(bn::fixed_point(5,-2),{5,-2});
-    blocks.insert(bn::fixed_point(6,-2),{6,-2});
+    BlockMap blocks;
+    blocks.insert(-1,1);
+    blocks.insert(1,1);
+    blocks.insert(2,1);
+    blocks.insert(3,1);
+    blocks.insert(1,2);
+    blocks.insert(2,2);
+    blocks.insert(3,2);
+    blocks.insert(5,-2);
+    blocks.insert(6,-2);
+    blocks.erase(-1,1);
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
@@ -457,7 +500,7 @@ int main()
     for(auto& enemy:enemies){
         enemy.sprite.set_camera(camera);
     }
-    for(auto& [position,block]:blocks){
+    for(auto& block:blocks.getAllBlocks()){
         block.sprite.set_camera(camera);
     }
 
