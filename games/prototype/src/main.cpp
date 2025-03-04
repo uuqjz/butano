@@ -25,6 +25,8 @@
 #include "bn_fixed_rect.h"
 #include "bn_unordered_map.h"
 #include <bn_fixed_point.h>
+#include "bn_regular_bg_ptr.h"
+#include "bn_regular_bg_items_clouds.h"
 
 namespace
 {
@@ -456,9 +458,13 @@ int main()
 
     bn::sprite_text_generator text_generator(common::variable_8x16_sprite_font);
     bn::bg_palettes::set_transparent_color(bn::color(16, 16, 16));
-    bn::blending::set_transparency_alpha(0.5);
 
     bn::camera_ptr camera = bn::camera_ptr::create(0, 0);
+
+    bn::regular_bg_ptr clouds_bg = bn::regular_bg_items::clouds.create_bg(0, 0);
+    bn::blending::set_transparency_alpha(0.5);
+    clouds_bg.set_blending_enabled(true);
+    clouds_bg.set_camera(camera);
     
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
@@ -490,7 +496,7 @@ int main()
     blocks.insert(3,2);
     blocks.insert(5,-2);
     blocks.insert(6,-2);
-    blocks.erase(-1,1);
+    
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
@@ -503,6 +509,8 @@ int main()
     for(auto& block:blocks.getAllBlocks()){
         block.sprite.set_camera(camera);
     }
+
+    blocks.erase(-1,1);
 
     bool bounce = readSram();
 
