@@ -27,6 +27,7 @@
 #include <bn_fixed_point.h>
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
+#include "bn_regular_bg_items_ground.h"
 
 namespace
 {
@@ -465,6 +466,9 @@ int main()
     bn::blending::set_transparency_alpha(0.5);
     clouds_bg.set_blending_enabled(true);
     clouds_bg.set_camera(camera);
+
+    bn::regular_bg_ptr ground_bg = bn::regular_bg_items::ground.create_bg(8, -156);
+    ground_bg.set_camera(camera);
     
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
@@ -483,8 +487,8 @@ int main()
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
-    enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
-    enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
+    enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL-7,0});
+    enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL-2,3});
 
     BlockMap blocks;
     blocks.insert(-1,1);
