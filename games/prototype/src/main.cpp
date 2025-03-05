@@ -136,11 +136,11 @@ namespace
     constexpr bn::fixed JUMP_VELOCITY = -10;
     constexpr bn::fixed GRAVITY = 0.5;
     constexpr bn::fixed AIR_RESISTANCE = 0.95;
-    constexpr int GROUND_LEVEL = 60;
+    constexpr int GROUND_LEVEL = 64;
     constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
     constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
     constexpr int CAMERA_BORDER_X = 100;
-    constexpr int CAMERA_BORDER_Y = 60;
+    constexpr int CAMERA_BORDER_Y = GROUND_LEVEL;
     constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
 
@@ -345,10 +345,10 @@ namespace
         return (distance < max_distance); 
     }
 
-    constexpr bn::fixed HIT_POINT_SCALE = 0.2f;
     constexpr int MAX_ENEMIES = 2;
     constexpr int RESPAWN_TIMER = 100;
     constexpr int SPEED = 1;
+    constexpr int DINO_OFFSET = -4;
 
     struct Enemy {
         bn::sprite_ptr sprite;
@@ -357,13 +357,13 @@ namespace
         bn::sprite_animate_action<3> animate_action;
 
         Enemy(const bn::sprite_item& sprite_item, int x, int y, int frame_index) 
-            : sprite(sprite_item.create_sprite(x, y)), 
+            : sprite(sprite_item.create_sprite(x, (frame_index == 0 ? y + DINO_OFFSET : y))), 
             palette(sprite.palette()), 
             animate_action(bn::create_sprite_animate_action_forever(
                   sprite, 16, sprite_item.tiles_item(),
                   frame_index, frame_index + 1, frame_index + 2)) 
         {
-            sprite.set_scale(HIT_POINT_SCALE * hit_points);
+            sprite.set_scale(0.5f);
         }
     };
 
@@ -382,8 +382,6 @@ namespace
                             enemies.erase(enemies.begin() + i);
                             i--;
                             framesBeforeRespawn=0;
-                        } else {
-                            enemy.sprite.set_scale(HIT_POINT_SCALE * enemy.hit_points);
                         }
                     }
                 }
@@ -467,7 +465,7 @@ int main()
     clouds_bg.set_blending_enabled(true);
     clouds_bg.set_camera(camera);
 
-    bn::regular_bg_ptr ground_bg = bn::regular_bg_items::ground.create_bg(8, -156);
+    bn::regular_bg_ptr ground_bg = bn::regular_bg_items::ground.create_bg(8, -152);
     ground_bg.set_camera(camera);
     
     bn::vector<Bullet, MAX_BULLETS> bullets;
@@ -487,8 +485,8 @@ int main()
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
-    enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL-7,0});
-    enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL-2,3});
+    enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
+    enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
 
     BlockMap blocks;
     blocks.insert(-1,1);
@@ -500,7 +498,6 @@ int main()
     blocks.insert(3,2);
     blocks.insert(5,-2);
     blocks.insert(6,-2);
-    
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
