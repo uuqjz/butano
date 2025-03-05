@@ -356,13 +356,15 @@ namespace
     };
 
     struct Enemy {
+        EnemyType type;
         bn::sprite_ptr sprite;
         bn::sprite_palette_ptr palette;
         int hit_points = 3;
         bn::sprite_animate_action<3> animate_action;
 
-        Enemy(int x, int y, EnemyType type) 
-            : sprite(bn::sprite_items::monsters.create_sprite(x, y + (type == EnemyType::DINO ? DINO_OFFSET : 0))), 
+        Enemy(int x, int y, EnemyType t) 
+            : type(t),
+              sprite(bn::sprite_items::monsters.create_sprite(x, y + (type == EnemyType::DINO ? DINO_OFFSET : 0))), 
               palette(sprite.palette()), 
               animate_action(bn::create_sprite_animate_action_forever(
                   sprite, 16, bn::sprite_items::monsters.tiles_item(),
