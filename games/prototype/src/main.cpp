@@ -350,18 +350,25 @@ namespace
     constexpr int SPEED = 1;
     constexpr int DINO_OFFSET = -4;
 
+    enum class EnemyType {
+        DINO,
+        TURTLE
+    };
+
     struct Enemy {
         bn::sprite_ptr sprite;
         bn::sprite_palette_ptr palette;
         int hit_points = 3;
         bn::sprite_animate_action<3> animate_action;
 
-        Enemy(const bn::sprite_item& sprite_item, int x, int y, int frame_index) 
-            : sprite(sprite_item.create_sprite(x, (frame_index == 0 ? y + DINO_OFFSET : y))), 
-            palette(sprite.palette()), 
-            animate_action(bn::create_sprite_animate_action_forever(
-                  sprite, 16, sprite_item.tiles_item(),
-                  frame_index, frame_index + 1, frame_index + 2)) 
+        Enemy(int x, int y, EnemyType type) 
+            : sprite(bn::sprite_items::monsters.create_sprite(x, y + (type == EnemyType::DINO ? DINO_OFFSET : 0))), 
+              palette(sprite.palette()), 
+              animate_action(bn::create_sprite_animate_action_forever(
+                  sprite, 16, bn::sprite_items::monsters.tiles_item(),
+                  type == EnemyType::DINO ? 0 : 3, 
+                  type == EnemyType::DINO ? 1 : 4, 
+                  type == EnemyType::DINO ? 2 : 5))
         {
             sprite.set_scale(0.5f);
         }
@@ -406,9 +413,8 @@ namespace
     void respawnEnemies(bn::random& random, int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
         framesBeforeRespawn++;
         if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
-            int frame_index = (random.get_int(2) % 2) * 3;
-            BN_LOG(frame_index);
-            Enemy new_enemy = {bn::sprite_items::monsters, 0, GROUND_LEVEL,frame_index};
+            bool dino = (random.get_int(2) == 0);
+            Enemy new_enemy(0, GROUND_LEVEL, dino ? EnemyType::DINO : EnemyType::TURTLE);
             new_enemy.sprite.set_camera(camera);
 
             int enemy_x;
@@ -485,8 +491,8 @@ int main()
     Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
-    enemies.push_back({bn::sprite_items::monsters,-100, GROUND_LEVEL,0});
-    enemies.push_back({bn::sprite_items::monsters,100, GROUND_LEVEL,3});
+    enemies.push_back({-100,GROUND_LEVEL,EnemyType::DINO});
+    enemies.push_back({100,GROUND_LEVEL,EnemyType::TURTLE});
 
     BlockMap blocks;
     blocks.insert(-1,1);
