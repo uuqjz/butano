@@ -154,7 +154,7 @@ namespace
         bool lookingRight = true;
         bn::sprite_animate_action<4> animate_action;
         bn::fixed_rect rect;
-        int framesSinceGround=0;
+        int framesSinceGround = 0;
 
         Player(const bn::sprite_item& sprite_item, int x, int y) 
             : sprite(sprite_item.create_sprite(x, y)),
@@ -234,7 +234,6 @@ namespace
             } else if(sprite.y() < GROUND_LEVEL){
                 is_on_ground = false;
             }
-            BN_LOG(standingOnBlock);
 
             bool rightFromCamera = sprite.x() > camera.x();
             if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER_X){
