@@ -143,6 +143,7 @@ namespace
     constexpr int CAMERA_BORDER_Y = GROUND_LEVEL;
     constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
+    constexpr int JUMP_GRACE_PERIOD = 3;
 
     struct Player {
         bn::sprite_ptr sprite;
@@ -153,6 +154,7 @@ namespace
         bool lookingRight = true;
         bn::sprite_animate_action<4> animate_action;
         bn::fixed_rect rect;
+        int framesSinceGround=0;
 
         Player(const bn::sprite_item& sprite_item, int x, int y) 
             : sprite(sprite_item.create_sprite(x, y)),
@@ -175,13 +177,14 @@ namespace
                 velocity_x *= is_on_ground ? 0.0f : AIR_RESISTANCE;
             }
 
-            if (bn::keypad::pressed(bn::keypad::key_type::A) && is_on_ground) {
+            if (bn::keypad::pressed(bn::keypad::key_type::A) && (is_on_ground || framesSinceGround < JUMP_GRACE_PERIOD)) {
                 velocity_y = JUMP_VELOCITY;
                 is_on_ground = false;
             }
 
             if (!is_on_ground) {
                 velocity_y += GRAVITY;
+                framesSinceGround++;
             }
 
             sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
@@ -194,7 +197,7 @@ namespace
                 if(blocks.contains(tile)){
                     auto& block = blocks.at(tile);
 
-                    if(rect.touches(block.rect)){ 
+                    if(rect.intersects(block.rect)){ 
                         bool fromAbove = prev_rect.bottom() <= block.rect.top();
                         bool fromBelow = prev_rect.top() >= block.rect.bottom();
 
@@ -207,9 +210,7 @@ namespace
                             velocity_y = 0;
                             standingOnBlock = true;
                         }
-                    }
 
-                    if(rect.intersects(block.rect)){ 
                         bool fromLeft = prev_rect.right() <= block.rect.left();
                         bool fromRight = prev_rect.left() >= block.rect.right();
 
@@ -229,9 +230,11 @@ namespace
 
             if(standingOnBlock){
                 is_on_ground = true;
+                framesSinceGround=0;
             } else if(sprite.y() < GROUND_LEVEL){
                 is_on_ground = false;
             }
+            BN_LOG(standingOnBlock);
 
             bool rightFromCamera = sprite.x() > camera.x();
             if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER_X){
@@ -275,6 +278,7 @@ namespace
                 } else {
                     velocity_y = 0;
                     is_on_ground = true;
+                    framesSinceGround=0;
                 }
             }
         }
@@ -518,8 +522,6 @@ int main()
     for(auto& block:blocks.getAllBlocks()){
         block.sprite.set_camera(camera);
     }
-
-    blocks.erase(-1,1);
 
     bool bounce = readSram();
 
