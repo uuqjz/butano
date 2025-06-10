@@ -38,8 +38,6 @@ namespace
     };
 
     bool readSram(){
-        bn::array<bn::string_view, 4> info_text_lines;
-
         sram_data cart_sram_data;
         bn::sram::read(cart_sram_data);
 
@@ -66,15 +64,9 @@ namespace
 
     void writeSram(bool bounce){
         sram_data cart_sram_data;
+        bn::sram::read(cart_sram_data);
 
-        bn::array<char, 32> format_tag;
-        bn::istring_base format_tag_istring(format_tag._data);
-        bn::ostringstream format_tag_stream(format_tag_istring);
-        format_tag_stream.append("PROTOTYPE");
-
-        cart_sram_data.format_tag=format_tag;
         cart_sram_data.bounce=bounce;
-
         bn::sram::write(cart_sram_data);
     }
 
