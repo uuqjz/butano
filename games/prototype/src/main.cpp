@@ -515,8 +515,13 @@ int main()
     }
 
     bool bounce = readSram();
+    bool stop = false;
 
-    while (hearts.size()>0) {
+    while (hearts.size()>0 && !stop) {
+        if(bn::keypad::select_pressed()){
+            stop=true;
+        }
+
         if(bn::keypad::start_pressed()){
             bounce = !bounce;
             writeSram(bounce);
