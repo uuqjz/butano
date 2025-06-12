@@ -515,11 +515,11 @@ int main()
     }
 
     bool bounce = readSram();
-    bool stop = false;
+    bool enemiesActive = false;
 
-    while (hearts.size()>0 && !stop) {
+    while (hearts.size()>0) {
         if(bn::keypad::select_pressed()){
-            stop=true;
+            enemiesActive = !enemiesActive;
         }
 
         if(bn::keypad::start_pressed()){
@@ -535,7 +535,9 @@ int main()
 
         respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
 
-        //moveEnemiesToPlayer(player,enemies,hearts,framesSinceLastHit);
+        if(enemiesActive){
+            moveEnemiesToPlayer(player,enemies,hearts,framesSinceLastHit);    
+        }
 
         for(auto& enemy : enemies){
             enemy.animate_action.update();
