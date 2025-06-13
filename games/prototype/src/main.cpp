@@ -33,18 +33,15 @@ namespace
 {
     struct sram_data
     {
-        bn::array<char, 32> format_tag;
+        int format_tag;
         bool bounce = false;
     };
+
+    constexpr int expected_format_tag = 721;
 
     bool readSram(){
         sram_data cart_sram_data;
         bn::sram::read(cart_sram_data);
-
-        bn::array<char, 32> expected_format_tag;
-        bn::istring_base expected_format_tag_istring(expected_format_tag._data);
-        bn::ostringstream expected_format_tag_stream(expected_format_tag_istring);
-        expected_format_tag_stream.append("PROTOTYPE");
 
         if(cart_sram_data.format_tag == expected_format_tag)
         {
@@ -66,6 +63,11 @@ namespace
         sram_data cart_sram_data;
         bn::sram::read(cart_sram_data);
 
+        if(cart_sram_data.format_tag != expected_format_tag)
+        {
+            cart_sram_data.format_tag = expected_format_tag;
+        }
+        
         cart_sram_data.bounce=bounce;
         bn::sram::write(cart_sram_data);
     }
@@ -518,11 +520,11 @@ int main()
     bool enemiesActive = false;
 
     while (hearts.size()>0) {
-        if(bn::keypad::select_pressed()){
+        if(bn::keypad::start_pressed()){
             enemiesActive = !enemiesActive;
         }
 
-        if(bn::keypad::start_pressed()){
+        if(bn::keypad::select_pressed()){
             bounce = !bounce;
             writeSram(bounce);
         }
