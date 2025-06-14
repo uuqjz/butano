@@ -16,18 +16,19 @@
 #include "bn_colors.h"
 #include "bn_cameras.h"
 #include "bn_sprite_animate_actions.h"
-#include "bn_sprite_items_ninja.h"
-#include "bn_sprite_items_block.h"
 #include "bn_sprite_items_rocket.h"
 #include "bn_sprite_items_monsters.h"
 #include "bn_sprite_items_head.h"
 #include "bn_blending.h"
 #include "bn_fixed_rect.h"
-#include "bn_unordered_map.h"
 #include <bn_fixed_point.h>
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
 #include "bn_regular_bg_items_ground.h"
+
+#include "block.h"
+#include "blockmap.h"
+#include "player.h"
 
 namespace
 {
@@ -72,226 +73,10 @@ namespace
         bn::sram::write(cart_sram_data);
     }
 
-    constexpr int MAX_BLOCKS = 32;
-    constexpr int BLOCK_SIZE = 16;
-    struct Block {
-        bn::sprite_ptr sprite;
-        bn::fixed_rect rect;
 
-        Block(int x, int y) 
-            : sprite(bn::sprite_items::block.create_sprite(x * BLOCK_SIZE, y * BLOCK_SIZE)),
-              rect(sprite.x(), sprite.y(), BLOCK_SIZE, BLOCK_SIZE) {
-        }
-    };
-
-    struct BlockMap {
-        void insert(int x, int y) {
-            map.insert(bn::fixed_point(x, y), {x, y});
-        }
-
-        void erase(int x, int y) {
-            map.erase(bn::fixed_point(x, y));
-        }
-
-        void erase(bn::fixed_point& point) {
-            map.erase(point);
-        }
-
-        bool contains(int x, int y) const {
-            return map.contains(bn::fixed_point(x,y));
-        }
-
-        bool contains(bn::fixed_point& point) const {
-            return map.contains(point);
-        }
-
-        const Block& at(int x, int y) const {
-            return map.at(bn::fixed_point(x, y));
-        }
-
-        const Block& at(bn::fixed_point& point) const {
-            return map.at(point);
-        }
-
-        bn::vector<Block,MAX_BLOCKS> getAllBlocks() const {
-            bn::vector<Block,MAX_BLOCKS> blocks;
-
-            for (const auto& [key, block] : map) {
-                blocks.push_back(block);
-            }
-
-            return blocks;
-        }
-
-        bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS> map;
-    };
-
-    constexpr int DISTANCE = 3;
-    constexpr bn::fixed JUMP_VELOCITY = -10;
-    constexpr bn::fixed GRAVITY = 0.5;
-    constexpr bn::fixed AIR_RESISTANCE = 0.95;
     constexpr int GROUND_LEVEL = 64;
-    constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
-    constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
-    constexpr int CAMERA_BORDER_X = 100;
-    constexpr int CAMERA_BORDER_Y = GROUND_LEVEL;
     constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
-    constexpr int JUMP_GRACE_PERIOD = 3;
-
-    struct Player {
-        bn::sprite_ptr sprite;
-        bn::sprite_palette_ptr palette;
-        bn::fixed velocity_x = 0.0f;
-        bn::fixed velocity_y = 0.0f;
-        bool is_on_ground = true;
-        bool lookingRight = true;
-        bn::sprite_animate_action<4> animate_action;
-        bn::fixed_rect rect;
-        int framesSinceGround = 0;
-
-        Player(const bn::sprite_item& sprite_item, int x, int y) 
-            : sprite(sprite_item.create_sprite(x, y)),
-            palette(sprite.palette()),
-            animate_action(bn::create_sprite_animate_action_forever(
-                  sprite, 16, sprite_item.tiles_item(), 12, 13, 14, 15)),
-            rect(sprite.position(),sprite.dimensions()) {
-        }
-
-        void move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
-            if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
-                velocity_x = -DISTANCE;
-            }
-
-            else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {
-                velocity_x = DISTANCE;
-            }
-
-            else {
-                velocity_x *= is_on_ground ? 0.0f : AIR_RESISTANCE;
-            }
-
-            if (bn::keypad::pressed(bn::keypad::key_type::A) && (is_on_ground || framesSinceGround < JUMP_GRACE_PERIOD)) {
-                velocity_y = JUMP_VELOCITY;
-                is_on_ground = false;
-            }
-
-            if (!is_on_ground) {
-                velocity_y += GRAVITY;
-                framesSinceGround++;
-            }
-
-            sprite.set_position(sprite.x() + velocity_x, sprite.y() + velocity_y);
-            bn::fixed_rect prev_rect = rect;
-            rect.set_position(sprite.position());
-
-            bool standingOnBlock = false;
-
-            for(auto& tile : getTiles()){
-                if(blocks.contains(tile)){
-                    auto& block = blocks.at(tile);
-
-                    if(rect.intersects(block.rect)){ 
-                        bool fromAbove = prev_rect.bottom() <= block.rect.top();
-                        bool fromBelow = prev_rect.top() >= block.rect.bottom();
-
-                        if (fromBelow) {
-                            sprite.set_y(block.rect.bottom() + sprite.dimensions().height() / 2);
-                            velocity_y = 0;
-                        }
-                        else if (fromAbove) {
-                            sprite.set_y(block.rect.top() - sprite.dimensions().height() / 2);
-                            velocity_y = 0;
-                            standingOnBlock = true;
-                        }
-
-                        bool fromLeft = prev_rect.right() <= block.rect.left();
-                        bool fromRight = prev_rect.left() >= block.rect.right();
-
-                        if (fromLeft) {
-                            sprite.set_x(block.rect.left() - sprite.dimensions().width() / 2);
-                            velocity_x = 0;
-                        }
-                        else if (fromRight) {
-                            sprite.set_x(block.rect.right() + sprite.dimensions().width() / 2);
-                            velocity_x = 0;
-                        }
-                    }
-
-                    rect.set_position(sprite.position());   
-                }
-            }
-
-            if(standingOnBlock){
-                is_on_ground = true;
-                framesSinceGround=0;
-            } else if(sprite.y() < GROUND_LEVEL){
-                is_on_ground = false;
-            }
-
-            bool rightFromCamera = sprite.x() > camera.x();
-            if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER_X){
-                int delta = (rightFromCamera ? -1 : 1) * CAMERA_BORDER_X;
-                camera.set_x(sprite.x()+delta);
-            }
-
-            bool overCamera = sprite.y() < camera.y();
-            if(bn::abs(sprite.y() - camera.y()) > CAMERA_BORDER_Y){
-                int delta = (overCamera ? 1 : -1) * CAMERA_BORDER_Y;
-                camera.set_y(bn::min(bn::fixed(0), sprite.y() + delta));
-            }
-
-            bool changedDirection = false;
-            if(bn::abs(velocity_x) > 0){
-                bool lookingRightNow = velocity_x > 0;
-                if(lookingRight!=lookingRightNow){
-                    lookingRight=lookingRightNow;
-                    changedDirection = true;
-                }
-            }
-
-            if(changedDirection){
-                if(lookingRight)
-                {
-                    animate_action = bn::create_sprite_animate_action_forever(
-                    sprite, 16, bn::sprite_items::ninja.tiles_item(), 12, 13, 14, 15);
-                }
-                else
-                {   
-                    animate_action = bn::create_sprite_animate_action_forever(
-                    sprite, 16, bn::sprite_items::ninja.tiles_item(), 8, 9, 10, 11);
-                }                
-            }
-
-            if (sprite.y() >= GROUND_LEVEL) {
-                sprite.set_y(GROUND_LEVEL);
-
-                if (bounce && bn::abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
-                    velocity_y = -velocity_y * BOUNCE_FACTOR;
-                } else {
-                    velocity_y = 0;
-                    is_on_ground = true;
-                    framesSinceGround=0;
-                }
-            }
-        }
-
-        bn::vector<bn::fixed_point, 9> getTiles()
-        {
-            int x0 = int(sprite.x()) / BLOCK_SIZE;
-            int y0 = int(sprite.y()) / BLOCK_SIZE;
-
-            bn::vector<bn::fixed_point, 9> tiles;
-
-            for(int x = x0 -1 ; x<= x0+1; x++){
-                for(int y = y0 -1 ; y<= y0+1; y++){
-                    tiles.push_back(bn::fixed_point(x,y));
-                }
-            }
-
-            return tiles;
-        }
-    };
 
     constexpr int MAX_BULLETS = 5;
     constexpr bn::fixed BULLET_SPEED = 2.0f;
@@ -487,7 +272,7 @@ int main()
         hearts.push_back({bn::sprite_items::head.create_sprite(-100+(i*20), -60)});
     }
 
-    Player player = {bn::sprite_items::ninja, 0, GROUND_LEVEL};
+    Player player = {0, GROUND_LEVEL};
 
     bn::vector<Enemy,MAX_ENEMIES> enemies;
     enemies.push_back({-100,GROUND_LEVEL,EnemyType::DINO});
