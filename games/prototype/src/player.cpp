@@ -5,7 +5,7 @@
 #include "bn_sprite_item.h"
 #include "bn_sprite_items_ninja.h"
 
-Player::Player(int x, int y)             : sprite(bn::sprite_items::ninja.create_sprite(x, y)),
+Player::Player(int x, int y) : sprite(bn::sprite_items::ninja.create_sprite(x, y)),
     palette(sprite.palette()),
     animate_action(bn::create_sprite_animate_action_forever(
         sprite, 16, bn::sprite_items::ninja.tiles_item(), 12, 13, 14, 15)),
@@ -132,8 +132,8 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
 
 bn::vector<bn::fixed_point, 9> Player::getTiles()
 {
-    int x0 = int(sprite.x()) / Block::BLOCK_SIZE;
-    int y0 = int(sprite.y()) / Block::BLOCK_SIZE;
+    int x0 = int(sprite.x()) / Block::SIZE;
+    int y0 = int(sprite.y()) / Block::SIZE;
 
     bn::vector<bn::fixed_point, 9> tiles;
 

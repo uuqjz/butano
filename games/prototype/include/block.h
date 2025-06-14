@@ -5,7 +5,7 @@
 #include "bn_fixed_rect.h"
 
 struct Block {
-    static constexpr int BLOCK_SIZE = 16;
+    static constexpr int SIZE = 16;
 
     bn::sprite_ptr sprite;
     bn::fixed_rect rect;

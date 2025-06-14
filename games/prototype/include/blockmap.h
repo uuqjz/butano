@@ -6,6 +6,7 @@
 #include "block.h"
 
 struct BlockMap {
+    //could make max size namespace constant aswell
     static constexpr int MAX_SIZE=32;
 
     void insert(int x, int y) {

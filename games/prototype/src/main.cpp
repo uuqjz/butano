@@ -1,5 +1,4 @@
 #include "bn_core.h"
-#include "bn_sram.h"
 #include "bn_string.h"
 #include "bn_bg_palettes.h"
 #include "bn_sprite_text_generator.h"
@@ -29,51 +28,10 @@
 #include "block.h"
 #include "blockmap.h"
 #include "player.h"
+#include "save.h"
 
 namespace
 {
-    struct sram_data
-    {
-        int format_tag;
-        bool bounce = false;
-    };
-
-    constexpr int expected_format_tag = 721;
-
-    bool readSram(){
-        sram_data cart_sram_data;
-        bn::sram::read(cart_sram_data);
-
-        if(cart_sram_data.format_tag == expected_format_tag)
-        {
-            return cart_sram_data.bounce;
-        }
-        else
-        {
-            cart_sram_data.format_tag = expected_format_tag;
-            cart_sram_data.bounce = false;
-
-            bn::sram::clear(bn::sram::size());
-            bn::sram::write(cart_sram_data);
-
-            return false;
-        }
-    }
-
-    void writeSram(bool bounce){
-        sram_data cart_sram_data;
-        bn::sram::read(cart_sram_data);
-
-        if(cart_sram_data.format_tag != expected_format_tag)
-        {
-            cart_sram_data.format_tag = expected_format_tag;
-        }
-        
-        cart_sram_data.bounce=bounce;
-        bn::sram::write(cart_sram_data);
-    }
-
-
     constexpr int GROUND_LEVEL = 64;
     constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
@@ -301,7 +259,7 @@ int main()
         block.sprite.set_camera(camera);
     }
 
-    bool bounce = readSram();
+    bool bounce = Save::read();
     bool enemiesActive = false;
 
     while (hearts.size()>0) {
@@ -311,7 +269,7 @@ int main()
 
         if(bn::keypad::select_pressed()){
             bounce = !bounce;
-            writeSram(bounce);
+            Save::write(bounce);
         }
 
         player.move(bounce,camera,blocks);
