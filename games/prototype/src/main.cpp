@@ -29,6 +29,7 @@
 #include "blockmap.h"
 #include "player.h"
 #include "save.h"
+#include "bullet.h"
 
 namespace
 {
@@ -37,39 +38,19 @@ namespace
     constexpr int INVINCIBILITY_FRAMES = 100;
 
     constexpr int MAX_BULLETS = 5;
-    constexpr bn::fixed BULLET_SPEED = 2.0f;
-    constexpr int MAX_BULLET_DISTANCE = 100;
 
-    struct Bullet {
-        bn::sprite_ptr sprite;
-        bool active = false;
-        bn::fixed start_x = 0.0f;
-        bn::fixed velocity_x = 0.0f;
-    };
-
-    void handleBullets(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player){
+    void spawnAndMoveBullets(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player){
         if (bn::keypad::pressed(bn::keypad::key_type::B)) {
             for (auto& bullet : bullets) {
                 if (!bullet.active) {
-                    bullet.active = true;
-                    bullet.sprite.set_visible(true);
-                    bullet.sprite.set_rotation_angle(player.lookingRight ? 270 : 90);
-                    bullet.start_x = player.sprite.x();
-                    bullet.sprite.set_position(player.sprite.x(), player.sprite.y());
-                    bullet.velocity_x = player.lookingRight ? BULLET_SPEED : -BULLET_SPEED;
+                    bullet.fire(player.sprite.x(), player.sprite.y(), player.lookingRight);
                     break;
                 }
             }
         }
 
         for (auto& bullet : bullets) {
-            if (bullet.active) {
-                bullet.sprite.set_x(bullet.sprite.x() + bullet.velocity_x);
-                if (bn::abs(bullet.sprite.x() - bullet.start_x) > MAX_BULLET_DISTANCE) {
-                    bullet.active = false;
-                    bullet.sprite.set_visible(false);
-                }
-            }
+            bullet.update();
         }
     }
 
@@ -274,7 +255,7 @@ int main()
 
         player.move(bounce,camera,blocks);
 
-        handleBullets(bullets,player);
+        spawnAndMoveBullets(bullets,player);
 
         bulletHitDetection(enemies,bullets,framesBeforeRespawn);
 
