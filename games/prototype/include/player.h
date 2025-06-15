@@ -2,18 +2,18 @@
 #define PLAYER_H
 
 #include "blockmap.h"
-#include <bn_sprite_animate_actions.h>
-#include <bn_sprite_palette_ptr.h>
-#include <bn_sprite_ptr.h>
+#include "bn_sprite_animate_actions.h"
+#include "bn_sprite_palette_ptr.h"
+#include "bn_sprite_ptr.h"
+#include "utils.h"
 
+using Utils::GROUND_LEVEL;
 
 struct Player {
     static constexpr int DISTANCE = 3;
     static constexpr bn::fixed JUMP_VELOCITY = -10;
     static constexpr bn::fixed GRAVITY = 0.5;
     static constexpr bn::fixed AIR_RESISTANCE = 0.95;
-    //Use namespace from main to get ground level
-    static constexpr int GROUND_LEVEL = 64;
     static constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
     static constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
     static constexpr int CAMERA_BORDER_X = 100;

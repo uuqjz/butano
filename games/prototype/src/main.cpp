@@ -3,7 +3,6 @@
 #include "bn_bg_palettes.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_keypad.h"
-#include "bn_math.h"
 #include "bn_log.h"
 #include "bn_random.h"
 
@@ -25,15 +24,20 @@
 #include "bn_regular_bg_items_clouds.h"
 #include "bn_regular_bg_items_ground.h"
 
+#include "utils.h"
 #include "block.h"
 #include "blockmap.h"
 #include "player.h"
 #include "save.h"
 #include "bullet.h"
+#include "enemytype.h"
+#include "enemy.h"
+
+using Utils::GROUND_LEVEL;
+using Utils::MAX_ENEMIES;
 
 namespace
 {
-    constexpr int GROUND_LEVEL = 64;
     constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
 
@@ -54,78 +58,16 @@ namespace
         }
     }
 
-    bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
-        bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();
-        bn::fixed objectB_radius = (objectB.shape_size().width() / 2) * objectB.horizontal_scale();
-        bn::fixed max_distance = (objectA_radius + objectB_radius) * (objectA_radius + objectB_radius);
-
-        bn::fixed distanceX = objectB.x() - objectA.x();
-        bn::fixed distanceY = objectB.y() - objectA.y();
-        bn::fixed distance = distanceX * distanceX + distanceY * distanceY;
-
-        return (distance < max_distance); 
-    }
-
-    constexpr int MAX_ENEMIES = 2;
     constexpr int RESPAWN_TIMER = 100;
     constexpr int SPEED = 1;
-    constexpr int DINO_OFFSET = -4;
-
-    enum class EnemyType {
-        DINO,
-        TURTLE
-    };
-
-    struct Enemy {
-        EnemyType type;
-        bn::sprite_ptr sprite;
-        bn::sprite_palette_ptr palette;
-        int hit_points = 3;
-        bn::sprite_animate_action<3> animate_action;
-
-        Enemy(int x, int y, EnemyType t) 
-            : type(t),
-              sprite(bn::sprite_items::monsters.create_sprite(x, y + (type == EnemyType::DINO ? DINO_OFFSET : 0))), 
-              palette(sprite.palette()), 
-              animate_action(bn::create_sprite_animate_action_forever(
-                  sprite, 16, bn::sprite_items::monsters.tiles_item(),
-                  type == EnemyType::DINO ? 0 : 3, 
-                  type == EnemyType::DINO ? 1 : 4, 
-                  type == EnemyType::DINO ? 2 : 5))
-        {
-            sprite.set_scale(0.5f);
-        }
-    };
-
-    void bulletHitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<Bullet, MAX_BULLETS>& bullets, int& framesBeforeRespawn){
-        for (auto& bullet : bullets) {
-            if (bullet.active) {
-                for (int i = 0; i < enemies.size(); i++) {
-                    auto& enemy = enemies[i];
-
-                    if (collision(bullet.sprite,enemy.sprite)) {
-                        enemy.hit_points--;
-                        bullet.active = false;
-                        bullet.sprite.set_visible(false);
-
-                        if (enemy.hit_points == 0) {
-                            enemies.erase(enemies.begin() + i);
-                            i--;
-                            framesBeforeRespawn=0;
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     bool isColliding(Enemy& enemy, Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies) {
-        if (collision(enemy.sprite, player.sprite)) {
+        if (Utils::collision(enemy.sprite, player.sprite)) {
             return true;
         }
 
         for (auto& otherenemy : enemies) {
-            if (&enemy != &otherenemy && collision(enemy.sprite, otherenemy.sprite)) {
+            if (&enemy != &otherenemy && Utils::collision(enemy.sprite, otherenemy.sprite)) {
                 return true;
             }
         }
@@ -163,7 +105,7 @@ namespace
 
             enemy.sprite.set_x(enemy.sprite.x() + steps);
 
-            if (framesSinceLastHit > INVINCIBILITY_FRAMES && collision(enemy.sprite, player.sprite)){
+            if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(enemy.sprite, player.sprite)){
                 framesSinceLastHit=0;
                 if(hearts.size()>0){
                     hearts.pop_back();
@@ -257,7 +199,9 @@ int main()
 
         spawnAndMoveBullets(bullets,player);
 
-        bulletHitDetection(enemies,bullets,framesBeforeRespawn);
+        for (auto& bullet : bullets) {
+            bullet.hitDetection(enemies, framesBeforeRespawn);
+        }
 
         respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
 

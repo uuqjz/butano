@@ -4,11 +4,11 @@
 #include "bn_unordered_map.h"
 #include "bn_vector.h"
 #include "block.h"
+#include "utils.h"
+
+using Utils::MAX_BLOCKS;
 
 struct BlockMap {
-    //could make max size namespace constant aswell
-    static constexpr int MAX_SIZE=32;
-
     void insert(int x, int y) {
         map.insert(bn::fixed_point(x, y), {x, y});
     }
@@ -37,8 +37,8 @@ struct BlockMap {
         return map.at(point);
     }
 
-    bn::vector<Block,MAX_SIZE> getAllBlocks() const {
-        bn::vector<Block,MAX_SIZE> blocks;
+    bn::vector<Block,MAX_BLOCKS> getAllBlocks() const {
+        bn::vector<Block,MAX_BLOCKS> blocks;
 
         for (const auto& [key, block] : map) {
             blocks.push_back(block);
@@ -47,7 +47,7 @@ struct BlockMap {
         return blocks;
     }
 
-    bn::unordered_map<bn::fixed_point, Block, MAX_SIZE> map;
+    bn::unordered_map<bn::fixed_point, Block, MAX_BLOCKS> map;
 };
 
 #endif // BLOCKMAP_H
