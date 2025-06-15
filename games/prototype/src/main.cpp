@@ -1,24 +1,18 @@
 #include "bn_core.h"
-#include "bn_string.h"
 #include "bn_bg_palettes.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_keypad.h"
 #include "bn_log.h"
-#include "bn_random.h"
 
 #include "common_info.h"
 #include "common_variable_8x16_sprite_font.h"
 
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_palette_ptr.h"
-#include "bn_colors.h"
-#include "bn_cameras.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_rocket.h"
-#include "bn_sprite_items_monsters.h"
 #include "bn_sprite_items_head.h"
 #include "bn_blending.h"
-#include "bn_fixed_rect.h"
 #include <bn_fixed_point.h>
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
@@ -35,91 +29,13 @@
 
 using Utils::GROUND_LEVEL;
 using Utils::MAX_ENEMIES;
+using Utils::MAX_BULLETS;
+using Utils::PLAYER_HIT_POINTS;
+using Utils::INVINCIBILITY_FRAMES;
 
 namespace
 {
-    constexpr int PLAYER_HIT_POINTS = 5;
-    constexpr int INVINCIBILITY_FRAMES = 100;
 
-    constexpr int MAX_BULLETS = 5;
-
-    void spawnAndMoveBullets(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player){
-        if (bn::keypad::pressed(bn::keypad::key_type::B)) {
-            for (auto& bullet : bullets) {
-                if (!bullet.active) {
-                    bullet.fire(player.sprite.x(), player.sprite.y(), player.lookingRight);
-                    break;
-                }
-            }
-        }
-
-        for (auto& bullet : bullets) {
-            bullet.update();
-        }
-    }
-
-    constexpr int RESPAWN_TIMER = 100;
-    constexpr int SPEED = 1;
-
-    bool isColliding(Enemy& enemy, Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies) {
-        if (Utils::collision(enemy.sprite, player.sprite)) {
-            return true;
-        }
-
-        for (auto& otherenemy : enemies) {
-            if (&enemy != &otherenemy && Utils::collision(enemy.sprite, otherenemy.sprite)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void respawnEnemies(bn::random& random, int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
-        framesBeforeRespawn++;
-        if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
-            bool dino = (random.get_int(2) == 0);
-            Enemy new_enemy(0, GROUND_LEVEL, dino ? EnemyType::DINO : EnemyType::TURTLE);
-            new_enemy.sprite.set_camera(camera);
-
-            int enemy_x;
-            do {
-                enemy_x = random.get_int(-100, 100);
-                new_enemy.sprite.set_x(enemy_x+camera.x());
-            } 
-            while (isColliding(new_enemy, player, enemies));
-
-            enemies.push_back(new_enemy);
-            framesBeforeRespawn = 0;
-        }
-    }
-
-    void moveEnemiesToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
-        framesSinceLastHit++;
-        if(framesSinceLastHit > INVINCIBILITY_FRAMES){
-            player.sprite.set_blending_enabled(false);
-        }
-        for (auto& enemy : enemies){
-            bool direction = player.sprite.x() > enemy.sprite.x();
-            int steps = SPEED * (direction ? 1 : -1);
-
-            enemy.sprite.set_x(enemy.sprite.x() + steps);
-
-            if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(enemy.sprite, player.sprite)){
-                framesSinceLastHit=0;
-                if(hearts.size()>0){
-                    hearts.pop_back();
-                }
-                player.sprite.set_blending_enabled(true);
-            }
-
-            if(isColliding(enemy,player,enemies)){
-                enemy.sprite.set_x(enemy.sprite.x() - steps);
-            }
-
-            enemy.sprite.set_horizontal_flip(!direction);
-        }
-    }
 }
 
 int main()
@@ -172,7 +88,6 @@ int main()
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
-    bn::random random;
 
     player.sprite.set_camera(camera);
     for(auto& enemy:enemies){
@@ -197,16 +112,16 @@ int main()
 
         player.move(bounce,camera,blocks);
 
-        spawnAndMoveBullets(bullets,player);
+        Bullet::spawnAndMove(bullets,player);
 
         for (auto& bullet : bullets) {
             bullet.hitDetection(enemies, framesBeforeRespawn);
         }
 
-        respawnEnemies(random,framesBeforeRespawn,player,enemies,camera);
+        Enemy::respawn(framesBeforeRespawn,player,enemies,camera);
 
         if(enemiesActive){
-            moveEnemiesToPlayer(player,enemies,hearts,framesSinceLastHit);    
+            Enemy::moveToPlayer(player,enemies,hearts,framesSinceLastHit);
         }
 
         for(auto& enemy : enemies){

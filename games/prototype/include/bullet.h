@@ -7,6 +7,7 @@
 #include "utils.h"
 
 using Utils::MAX_ENEMIES;
+using Utils::MAX_BULLETS;
 
 struct Bullet {
     bn::sprite_ptr sprite;
@@ -19,6 +20,8 @@ struct Bullet {
     void update();
 
     void hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn);
+
+    static void spawnAndMove(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player);
 };
 
 #endif // BULLET_H

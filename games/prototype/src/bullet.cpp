@@ -1,4 +1,5 @@
 #include "bullet.h"
+#include "bn_keypad.h"
 #include "bn_math.h"
 
 constexpr bn::fixed SPEED = 2.0f;
@@ -43,5 +44,20 @@ void Bullet::hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBef
                 }
             }
         }
+    }
+}
+
+void Bullet::spawnAndMove(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player){
+    if (bn::keypad::pressed(bn::keypad::key_type::B)) {
+        for (auto& bullet : bullets) {
+            if (!bullet.active) {
+                bullet.fire(player.sprite.x(), player.sprite.y(), player.lookingRight);
+                break;
+            }
+        }
+    }
+
+    for (auto& bullet : bullets) {
+        bullet.update();
     }
 }
