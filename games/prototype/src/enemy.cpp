@@ -63,8 +63,10 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& fr
     int steps = 0;
 
     if(type==EnemyType::DINO){
-        lookingRight = player.sprite.x() > sprite.x();
-        steps = SPEED * (lookingRight ? 1 : -1);
+        if(bn::abs(player.sprite.x() - sprite.x()) > SPEED){
+            lookingRight = player.sprite.x() > sprite.x();
+            steps = SPEED * (lookingRight ? 1 : -1);
+        }
     }
 
     else if(type==EnemyType::TURTLE){
