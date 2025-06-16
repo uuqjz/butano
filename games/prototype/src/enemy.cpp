@@ -8,6 +8,8 @@ using Utils::INVINCIBILITY_FRAMES;
 constexpr int DINO_OFFSET = -4;
 constexpr int RESPAWN_TIMER = 100;
 constexpr int SPEED = 1;
+constexpr int RESPAWN_RANGE = 100;
+constexpr int OSCILLATION_RANGE = 15;
 
 Enemy::Enemy(int x, int y, EnemyType t) : type(t),
     sprite(bn::sprite_items::monsters.create_sprite(x, y + (type == EnemyType::DINO ? DINO_OFFSET : 0))),
@@ -19,6 +21,7 @@ Enemy::Enemy(int x, int y, EnemyType t) : type(t),
         type == EnemyType::DINO ? 2 : 5))
 {
     sprite.set_scale(0.5f);
+    spawnX = sprite.x();
 }
 
 bool Enemy::isColliding(Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies) {
@@ -45,11 +48,12 @@ void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,M
 
         int enemy_x;
         do {
-            enemy_x = random.get_int(-100, 100);
+            enemy_x = random.get_int(-RESPAWN_RANGE, RESPAWN_RANGE);
             new_enemy.sprite.set_x(enemy_x+camera.x());
         }
         while (new_enemy.isColliding(player, enemies));
 
+        new_enemy.spawnX = new_enemy.sprite.x();
         enemies.push_back(new_enemy);
         framesBeforeRespawn = 0;
     }
@@ -61,8 +65,32 @@ void Enemy::moveToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies,
         player.sprite.set_blending_enabled(false);
     }
     for (auto& enemy : enemies){
-        bool direction = player.sprite.x() > enemy.sprite.x();
-        int steps = SPEED * (direction ? 1 : -1);
+        int steps = 0;
+
+        if(enemy.type==EnemyType::DINO){
+            enemy.lookingRight = player.sprite.x() > enemy.sprite.x();
+            steps = SPEED * (enemy.lookingRight ? 1 : -1);
+        }
+
+        else if(enemy.type==EnemyType::TURTLE){
+            if(enemy.lookingRight){
+                if(enemy.sprite.x()+SPEED<enemy.spawnX+OSCILLATION_RANGE){
+                    steps = SPEED;
+                }
+                else{
+                    enemy.lookingRight = false;
+                }
+            }
+            else{
+                if(enemy.sprite.x()-SPEED>enemy.spawnX-OSCILLATION_RANGE){
+                    steps = -SPEED;
+                }
+                else{
+                    enemy.lookingRight = true;
+                }
+
+            }
+        }
 
         enemy.sprite.set_x(enemy.sprite.x() + steps);
 
@@ -78,6 +106,6 @@ void Enemy::moveToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies,
             enemy.sprite.set_x(enemy.sprite.x() - steps);
         }
 
-        enemy.sprite.set_horizontal_flip(!direction);
+        enemy.sprite.set_horizontal_flip(!enemy.lookingRight);
     }
 }

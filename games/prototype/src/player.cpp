@@ -14,7 +14,7 @@ Player::Player(int x, int y) : sprite(bn::sprite_items::ninja.create_sprite(x, y
 
 void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
     if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
-        velocity_x = -Player::DISTANCE;
+        velocity_x = -DISTANCE;
     }
 
     else if (bn::keypad::held(bn::keypad::key_type::RIGHT)) {

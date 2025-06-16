@@ -17,6 +17,8 @@ struct Enemy {
     bn::sprite_palette_ptr palette;
     int hit_points = 3;
     bn::sprite_animate_action<3> animate_action;
+    bn::fixed spawnX;
+    bool lookingRight = false;
 
     Enemy(int x, int y, EnemyType t);
 
