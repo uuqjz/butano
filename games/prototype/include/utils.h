@@ -8,9 +8,8 @@
 namespace Utils{
     constexpr int MAX_ENEMIES = 2;
     constexpr int GROUND_LEVEL = 64;
-    constexpr int MAX_BLOCKS = 32;
+    constexpr int DEATH_PANE = 90;
     constexpr int MAX_BULLETS = 5;
-    constexpr int PLAYER_HIT_POINTS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
 
     inline bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){

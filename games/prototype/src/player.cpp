@@ -4,12 +4,16 @@
 #include "bn_math.h"
 #include "bn_sprite_item.h"
 #include "bn_sprite_items_ninja.h"
+#include "bn_sprite_items_head.h"
 
 Player::Player(int x, int y) : sprite(bn::sprite_items::ninja.create_sprite(x, y)),
     palette(sprite.palette()),
     animate_action(bn::create_sprite_animate_action_forever(
         sprite, 16, bn::sprite_items::ninja.tiles_item(), 12, 13, 14, 15)),
     rect(sprite.position(),sprite.dimensions()) {
+    for(int i = 0; i < HIT_POINTS; i++){
+        hearts.push_back({bn::sprite_items::head.create_sprite(-100+(i*20), -60)});
+    }
 }
 
 void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
@@ -55,7 +59,6 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
                 }
                 else if (fromAbove) {
                     sprite.set_y(block.rect.top() - sprite.dimensions().height() / 2);
-                    velocity_y = 0;
                     standingOnBlock = true;
                 }
 
@@ -76,12 +79,9 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
         }
     }
 
-    if(standingOnBlock){
-        is_on_ground = true;
-        framesSinceGround=0;
-    } else if(sprite.y() < GROUND_LEVEL){
-        is_on_ground = false;
-    }
+
+    is_on_ground = standingOnBlock;
+
 
     bool rightFromCamera = sprite.x() > camera.x();
     if(bn::abs(sprite.x()-camera.x())>CAMERA_BORDER_X){
@@ -117,16 +117,18 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
         }
     }
 
-    if (sprite.y() >= GROUND_LEVEL) {
-        sprite.set_y(GROUND_LEVEL);
-
+    if (is_on_ground) {
         if (bounce && bn::abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
             velocity_y = -velocity_y * BOUNCE_FACTOR;
+            is_on_ground=false;
         } else {
             velocity_y = 0;
-            is_on_ground = true;
             framesSinceGround=0;
         }
+    }
+
+    if(sprite.y() > DEATH_PANE){
+        hearts.clear();
     }
 }
 
@@ -144,4 +146,14 @@ bn::vector<bn::fixed_point, 9> Player::getTiles()
     }
 
     return tiles;
+}
+
+int Player::hitPoints(){
+    return hearts.size();
+}
+
+void Player::hit(){
+    if(hearts.size()>0){
+        hearts.pop_back();
+    }
 }

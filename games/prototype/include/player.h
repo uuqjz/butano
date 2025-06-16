@@ -8,6 +8,7 @@
 #include "utils.h"
 
 using Utils::GROUND_LEVEL;
+using Utils::DEATH_PANE;
 
 struct Player {
     static constexpr int DISTANCE = 3;
@@ -15,10 +16,11 @@ struct Player {
     static constexpr bn::fixed GRAVITY = 0.5;
     static constexpr bn::fixed AIR_RESISTANCE = 0.95;
     static constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
-    static constexpr bn::fixed MIN_BOUNCE_VELOCITY = 1.0f;
+    static constexpr bn::fixed MIN_BOUNCE_VELOCITY = 0.25f;
     static constexpr int CAMERA_BORDER_X = 100;
     static constexpr int CAMERA_BORDER_Y = GROUND_LEVEL;
     static constexpr int JUMP_GRACE_PERIOD = 3;
+    static constexpr int HIT_POINTS = 5;
 
     bn::sprite_ptr sprite;
     bn::sprite_palette_ptr palette;
@@ -29,12 +31,17 @@ struct Player {
     bn::sprite_animate_action<4> animate_action;
     bn::fixed_rect rect;
     int framesSinceGround = 0;
+    bn::vector<bn::sprite_ptr,HIT_POINTS> hearts;
 
     Player(int x, int y);
 
     void move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks);
 
     bn::vector<bn::fixed_point, 9> getTiles();
+
+    int hitPoints();
+
+    void hit();
 };
 
 #endif // PLAYER_H

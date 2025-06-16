@@ -1,7 +1,7 @@
 #include "enemy.h"
 #include "bn_sprite_item.h"
 #include "bn_sprite_items_monsters.h"
-#include <bn_random.h>
+#include "bn_random.h"
 
 using Utils::INVINCIBILITY_FRAMES;
 
@@ -59,7 +59,7 @@ void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,M
     }
 }
 
-void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
+void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
     int steps = 0;
 
     if(type==EnemyType::DINO){
@@ -91,9 +91,7 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vec
 
     if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(sprite, player.sprite)){
         framesSinceLastHit=0;
-        if(hearts.size()>0){
-            hearts.pop_back();
-        }
+        player.hit();
         player.sprite.set_blending_enabled(true);
     }
 
@@ -104,13 +102,13 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vec
     sprite.set_horizontal_flip(!lookingRight);
 }
 
-void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
+void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
     framesSinceLastHit++;
     if(framesSinceLastHit > INVINCIBILITY_FRAMES){
         player.sprite.set_blending_enabled(false);
     }
 
     for (auto& enemy : enemies){
-        enemy.move(player,enemies,hearts,framesSinceLastHit);
+        enemy.move(player,enemies,framesSinceLastHit);
     }
 }

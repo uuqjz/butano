@@ -4,13 +4,18 @@
 #include "bn_unordered_map.h"
 #include "bn_vector.h"
 #include "block.h"
-#include "utils.h"
 
-using Utils::MAX_BLOCKS;
+constexpr int MAX_BLOCKS = 128;
 
 struct BlockMap {
     void insert(int x, int y) {
         map.insert(bn::fixed_point(x, y), {x, y});
+    }
+
+    void insertLine(int xLeft,int xRight, int y) {
+        for(int x = xLeft; x <= xRight;x++){
+            map.insert(bn::fixed_point(x, y), {x, y});
+        }
     }
 
     void erase(int x, int y) {

@@ -11,12 +11,9 @@
 #include "bn_sprite_palette_ptr.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_rocket.h"
-#include "bn_sprite_items_head.h"
 #include "bn_blending.h"
-#include <bn_fixed_point.h>
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
-#include "bn_regular_bg_items_ground.h"
 
 #include "utils.h"
 #include "block.h"
@@ -30,7 +27,6 @@
 using Utils::GROUND_LEVEL;
 using Utils::MAX_ENEMIES;
 using Utils::MAX_BULLETS;
-using Utils::PLAYER_HIT_POINTS;
 using Utils::INVINCIBILITY_FRAMES;
 
 namespace
@@ -51,9 +47,6 @@ int main()
     bn::blending::set_transparency_alpha(0.5);
     clouds_bg.set_blending_enabled(true);
     clouds_bg.set_camera(camera);
-
-    bn::regular_bg_ptr ground_bg = bn::regular_bg_items::ground.create_bg(8, -152);
-    ground_bg.set_camera(camera);
     
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
@@ -62,11 +55,6 @@ int main()
         bullets[i].sprite.set_scale(0.5);
         bullets[i].sprite.set_visible(false);
         bullets[i].sprite.set_camera(camera);
-    }
-
-    bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS> hearts;
-    for(int i = 0; i < PLAYER_HIT_POINTS; i++){
-        hearts.push_back({bn::sprite_items::head.create_sprite(-100+(i*20), -60)});
     }
 
     Player player = {0, GROUND_LEVEL};
@@ -85,6 +73,7 @@ int main()
     blocks.insert(3,2);
     blocks.insert(5,-2);
     blocks.insert(6,-2);
+    blocks.insertLine(-20,20,5);
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
@@ -100,7 +89,7 @@ int main()
     bool bounce = Save::read();
     bool enemiesActive = false;
 
-    while (hearts.size()>0) {
+    while (player.hitPoints()>0) {
         if(bn::keypad::start_pressed()){
             enemiesActive = !enemiesActive;
         }
@@ -121,7 +110,7 @@ int main()
         Enemy::respawn(framesBeforeRespawn,player,enemies,camera);
 
         if(enemiesActive){
-            Enemy::moveAll(player,enemies,hearts,framesSinceLastHit);
+            Enemy::moveAll(player,enemies,framesSinceLastHit);
         }
 
         for(auto& enemy : enemies){
