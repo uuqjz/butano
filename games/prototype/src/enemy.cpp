@@ -59,53 +59,58 @@ void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,M
     }
 }
 
-void Enemy::moveToPlayer(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
+void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
+    int steps = 0;
+
+    if(type==EnemyType::DINO){
+        lookingRight = player.sprite.x() > sprite.x();
+        steps = SPEED * (lookingRight ? 1 : -1);
+    }
+
+    else if(type==EnemyType::TURTLE){
+        if(lookingRight){
+            if(sprite.x()+SPEED<spawnX+OSCILLATION_RANGE){
+                steps = SPEED;
+            }
+            else{
+                lookingRight = false;
+            }
+        }
+        else{
+            if(sprite.x()-SPEED>spawnX-OSCILLATION_RANGE){
+                steps = -SPEED;
+            }
+            else{
+                lookingRight = true;
+            }
+
+        }
+    }
+
+    sprite.set_x(sprite.x() + steps);
+
+    if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(sprite, player.sprite)){
+        framesSinceLastHit=0;
+        if(hearts.size()>0){
+            hearts.pop_back();
+        }
+        player.sprite.set_blending_enabled(true);
+    }
+
+    if(isColliding(player,enemies)){
+        sprite.set_x(sprite.x() - steps);
+    }
+
+    sprite.set_horizontal_flip(!lookingRight);
+}
+
+void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::vector<bn::sprite_ptr,PLAYER_HIT_POINTS>& hearts, int& framesSinceLastHit){
     framesSinceLastHit++;
     if(framesSinceLastHit > INVINCIBILITY_FRAMES){
         player.sprite.set_blending_enabled(false);
     }
+
     for (auto& enemy : enemies){
-        int steps = 0;
-
-        if(enemy.type==EnemyType::DINO){
-            enemy.lookingRight = player.sprite.x() > enemy.sprite.x();
-            steps = SPEED * (enemy.lookingRight ? 1 : -1);
-        }
-
-        else if(enemy.type==EnemyType::TURTLE){
-            if(enemy.lookingRight){
-                if(enemy.sprite.x()+SPEED<enemy.spawnX+OSCILLATION_RANGE){
-                    steps = SPEED;
-                }
-                else{
-                    enemy.lookingRight = false;
-                }
-            }
-            else{
-                if(enemy.sprite.x()-SPEED>enemy.spawnX-OSCILLATION_RANGE){
-                    steps = -SPEED;
-                }
-                else{
-                    enemy.lookingRight = true;
-                }
-
-            }
-        }
-
-        enemy.sprite.set_x(enemy.sprite.x() + steps);
-
-        if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(enemy.sprite, player.sprite)){
-            framesSinceLastHit=0;
-            if(hearts.size()>0){
-                hearts.pop_back();
-            }
-            player.sprite.set_blending_enabled(true);
-        }
-
-        if(enemy.isColliding(player,enemies)){
-            enemy.sprite.set_x(enemy.sprite.x() - steps);
-        }
-
-        enemy.sprite.set_horizontal_flip(!enemy.lookingRight);
+        enemy.move(player,enemies,hearts,framesSinceLastHit);
     }
 }

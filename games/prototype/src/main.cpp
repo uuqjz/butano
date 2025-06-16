@@ -121,7 +121,7 @@ int main()
         Enemy::respawn(framesBeforeRespawn,player,enemies,camera);
 
         if(enemiesActive){
-            Enemy::moveToPlayer(player,enemies,hearts,framesSinceLastHit);
+            Enemy::moveAll(player,enemies,hearts,framesSinceLastHit);
         }
 
         for(auto& enemy : enemies){
