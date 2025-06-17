@@ -1,21 +1,21 @@
 #include "enemy.h"
 #include "bn_sprite_item.h"
-#include "bn_sprite_items_monsters.h"
+#include "bn_sprite_items_monsters_grounded.h"
 #include "bn_random.h"
 
 using Utils::INVINCIBILITY_FRAMES;
 
-constexpr int DINO_OFFSET = -4;
 constexpr int RESPAWN_TIMER = 100;
 constexpr int SPEED = 1;
 constexpr int RESPAWN_RANGE = 100;
 constexpr int OSCILLATION_RANGE = 15;
+constexpr int OFFSET = -8;
 
 Enemy::Enemy(int x, int y, EnemyType t) : type(t),
-    sprite(bn::sprite_items::monsters.create_sprite(x, y + (type == EnemyType::DINO ? DINO_OFFSET : 0))),
+    sprite(bn::sprite_items::monsters_grounded.create_sprite(x, y + OFFSET)),
     palette(sprite.palette()),
     animate_action(bn::create_sprite_animate_action_forever(
-        sprite, 16, bn::sprite_items::monsters.tiles_item(),
+        sprite, 16, bn::sprite_items::monsters_grounded.tiles_item(),
         type == EnemyType::DINO ? 0 : 3,
         type == EnemyType::DINO ? 1 : 4,
         type == EnemyType::DINO ? 2 : 5))
