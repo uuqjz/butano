@@ -118,7 +118,7 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
     }
 
     if (is_on_ground) {
-        if (bounce && bn::abs(velocity_y) > MIN_BOUNCE_VELOCITY) {
+        if (bounce && velocity_y > GRAVITY) {
             velocity_y = -velocity_y * BOUNCE_FACTOR;
             is_on_ground=false;
         } else {

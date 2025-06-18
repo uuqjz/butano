@@ -16,7 +16,6 @@ struct Player {
     static constexpr bn::fixed GRAVITY = 0.5;
     static constexpr bn::fixed AIR_RESISTANCE = 0.95;
     static constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
-    static constexpr bn::fixed MIN_BOUNCE_VELOCITY = 0.25f;
     static constexpr int CAMERA_BORDER_X = 100;
     static constexpr int CAMERA_BORDER_Y = GROUND_LEVEL;
     static constexpr int JUMP_GRACE_PERIOD = 3;
