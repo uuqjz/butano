@@ -1,7 +1,6 @@
 #include "enemy.h"
 #include "bn_sprite_item.h"
 #include "bn_sprite_items_monsters_grounded.h"
-#include "bn_random.h"
 
 using Utils::INVINCIBILITY_FRAMES;
 
@@ -38,8 +37,7 @@ bool Enemy::isColliding(Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies)
     return false;
 }
 
-void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
-    bn::random random;
+void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera, bn::random& random){
     framesBeforeRespawn++;
     if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
         bool dino = (random.get_int(2) == 0);

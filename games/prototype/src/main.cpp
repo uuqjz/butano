@@ -14,6 +14,7 @@
 #include "bn_blending.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
+#include "bn_random.h"
 
 #include "utils.h"
 #include "block.h"
@@ -89,6 +90,8 @@ int main()
     bool bounce = Save::read();
     bool enemiesActive = false;
 
+    bn::random random;
+
     while (player.hitPoints()>0) {
         if(bn::keypad::start_pressed()){
             enemiesActive = !enemiesActive;
@@ -107,7 +110,7 @@ int main()
             bullet.hitDetection(enemies, framesBeforeRespawn);
         }
 
-        Enemy::respawn(framesBeforeRespawn,player,enemies,camera);
+        Enemy::respawn(framesBeforeRespawn,player,enemies,camera,random);
 
         if(enemiesActive){
             Enemy::moveAll(player,enemies,framesSinceLastHit);
