@@ -25,6 +25,8 @@ struct Enemy {
 
     bool isColliding(Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies);
 
+    bool collidesWithBlock();
+
     static void respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera);
 
     void move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies);

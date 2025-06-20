@@ -3,6 +3,8 @@
 #include "bn_math.h"
 #include "bn_sprite_items_rocket_scaled.h"
 
+using Utils::blocks;
+
 constexpr bn::fixed SPEED = 2.0f;
 constexpr int MAX_DISTANCE = 100;
 
@@ -42,6 +44,19 @@ void Bullet::hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies){
                 enemy.hit_points--;
                 active = false;
                 sprite.set_visible(false);
+            }
+        }
+    }
+
+    if(active){
+        for(auto& tile : Utils::getTiles(sprite)){
+            if(blocks.contains(tile)){
+                auto& block = blocks.at(tile);
+
+                if(rect.intersects(block.rect)){
+                    active = false;
+                    sprite.set_visible(false);
+                }
             }
         }
     }

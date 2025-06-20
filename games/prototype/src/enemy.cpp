@@ -42,6 +42,20 @@ bool Enemy::isColliding(Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies)
     return false;
 }
 
+bool Enemy::collidesWithBlock(){
+    for(auto& tile : Utils::getTiles(sprite)){
+        if(blocks.contains(tile)){
+            auto& block = blocks.at(tile);
+
+            if(rect.intersects(block.rect)){
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void Enemy::respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
     framesBeforeRespawn++;
     if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
@@ -55,7 +69,7 @@ void Enemy::respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::
             new_enemy.sprite.set_x(enemy_x+camera.x());
             new_enemy.rect.set_position(new_enemy.sprite.position());
         }
-        while (new_enemy.isColliding(player, enemies));
+        while (new_enemy.isColliding(player, enemies) || new_enemy.collidesWithBlock());
 
         new_enemy.spawnX = new_enemy.sprite.x();
         enemies.push_back(new_enemy);
