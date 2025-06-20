@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include "block.h"
+#include "blockmap.h"
 #include "bn_fixed_fwd.h"
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_shape_size.h"
@@ -16,6 +17,7 @@ namespace Utils{
     constexpr int MAX_NEIGHBORING_BLOCKS = 25;
     constexpr bn::fixed GRAVITY = 0.5;
 
+    extern BlockMap blocks;
 
     inline bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
         bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();

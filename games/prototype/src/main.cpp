@@ -29,10 +29,11 @@ using Utils::MAX_ENEMIES;
 using Utils::MAX_BULLETS;
 using Utils::INVINCIBILITY_FRAMES;
 
-namespace
-{
-
+namespace Utils {
+    BlockMap blocks;
 }
+
+using Utils::blocks;
 
 int main()
 {
@@ -63,7 +64,6 @@ int main()
     enemies.push_back({-100,GROUND_LEVEL,EnemyType::DINO});
     enemies.push_back({100,GROUND_LEVEL,EnemyType::TURTLE});
 
-    BlockMap blocks;
     blocks.insert(-1,1);
     blocks.insert(1,1);
     blocks.insert(2,1);
@@ -104,7 +104,7 @@ int main()
             Save::write(bounce);
         }
 
-        player.move(bounce,camera,blocks);
+        player.move(bounce,camera);
 
         Bullet::spawnAndMove(bullets,player);
 
@@ -117,7 +117,7 @@ int main()
         Enemy::respawn(framesBeforeRespawn,player,enemies,camera,random);
 
         if(enemiesActive){
-            Enemy::moveAll(player,enemies,framesSinceLastHit,blocks);
+            Enemy::moveAll(player,enemies,framesSinceLastHit);
         }
 
         for(auto& enemy : enemies){

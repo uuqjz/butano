@@ -28,9 +28,9 @@ struct Enemy {
 
     static void respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera, bn::random& random);
 
-    void move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks);
+    void move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit);
 
-    static void moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks);
+    static void moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit);
 
     static void removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn);
 };

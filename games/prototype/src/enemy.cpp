@@ -4,6 +4,7 @@
 
 using Utils::INVINCIBILITY_FRAMES;
 using Utils::GRAVITY;
+using Utils::blocks;
 
 constexpr int RESPAWN_TIMER = 100;
 constexpr int SPEED = 1;
@@ -58,7 +59,7 @@ void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,M
     }
 }
 
-void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks){
+void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
     int steps = 0;
 
     if(type==EnemyType::DINO){
@@ -147,14 +148,14 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& fr
     }
 }
 
-void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks){
+void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
     framesSinceLastHit++;
     if(framesSinceLastHit > INVINCIBILITY_FRAMES){
         player.sprite.set_blending_enabled(false);
     }
 
     for (auto& enemy : enemies){
-        enemy.move(player,enemies,framesSinceLastHit,blocks);
+        enemy.move(player,enemies,framesSinceLastHit);
     }
 }
 

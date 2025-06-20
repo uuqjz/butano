@@ -7,6 +7,7 @@
 #include "bn_sprite_items_head.h"
 
 using Utils::GRAVITY;
+using Utils::blocks;
 
 Player::Player(int x, int y) : sprite(bn::sprite_items::ninja.create_sprite(x, y)),
     palette(sprite.palette()),
@@ -18,7 +19,7 @@ Player::Player(int x, int y) : sprite(bn::sprite_items::ninja.create_sprite(x, y
     }
 }
 
-void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
+void Player::move(bool bounce, bn::camera_ptr& camera){
     if (bn::keypad::held(bn::keypad::key_type::LEFT)) {
         velocity_x = -DISTANCE;
     }

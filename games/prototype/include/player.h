@@ -33,7 +33,7 @@ struct Player {
 
     Player(int x, int y);
 
-    void move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks);
+    void move(bool bounce, bn::camera_ptr& camera);
 
     int hitPoints();
 
