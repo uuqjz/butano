@@ -1,9 +1,15 @@
 #include "bullet.h"
 #include "bn_keypad.h"
 #include "bn_math.h"
+#include "bn_sprite_items_rocket_scaled.h"
 
 constexpr bn::fixed SPEED = 2.0f;
 constexpr int MAX_DISTANCE = 100;
+
+Bullet::Bullet(int x, int y) : sprite(bn::sprite_items::rocket_scaled.create_sprite(x, y)),
+    rect(sprite.position(),sprite.dimensions()) {
+    sprite.set_visible(false);
+}
 
 void Bullet::fire(bn::fixed x, bn::fixed y, bool right) {
     if (active) return;
@@ -20,6 +26,7 @@ void Bullet::update() {
     if (!active) return;
 
     sprite.set_x(sprite.x() + velocity_x);
+    rect.set_position(sprite.position());
 
     if (bn::abs(sprite.x() - start_x) > MAX_DISTANCE) {
         active = false;

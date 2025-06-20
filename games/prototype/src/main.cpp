@@ -55,8 +55,7 @@ int main()
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
     for(int i = 0; i < MAX_BULLETS; i++) {
-        bullets.push_back({bn::sprite_items::rocket_scaled.create_sprite(0, GROUND_LEVEL)});
-        bullets[i].sprite.set_visible(false);
+        bullets.push_back({0, GROUND_LEVEL});
         bullets[i].sprite.set_camera(camera);
     }
 

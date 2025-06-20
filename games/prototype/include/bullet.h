@@ -14,6 +14,9 @@ struct Bullet {
     bool active = false;
     bn::fixed start_x = 0.0f;
     bn::fixed velocity_x = 0.0f;
+    bn::fixed_rect rect;
+
+    Bullet(int x, int y);
 
     void fire(bn::fixed x, bn::fixed y, bool right);
 
