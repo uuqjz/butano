@@ -17,6 +17,7 @@ void Bullet::fire(bn::fixed x, bn::fixed y, bool right) {
     active = true;
     sprite.set_visible(true);
     sprite.set_position(x, y);
+    rect.set_position(sprite.position());
     sprite.set_horizontal_flip(!right);
     start_x = x;
     velocity_x = right ? SPEED : -SPEED;
@@ -37,7 +38,7 @@ void Bullet::update() {
 void Bullet::hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies){
     if (active) {
         for (auto& enemy : enemies){
-            if (Utils::collision(sprite,enemy.sprite)) {
+            if (rect.intersects(enemy.rect)) {
                 enemy.hit_points--;
                 active = false;
                 sprite.set_visible(false);

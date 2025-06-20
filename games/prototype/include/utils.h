@@ -23,18 +23,6 @@ namespace Utils{
     extern int framesSinceLastHit;
     extern bn::random random_spawn;
 
-    inline bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
-        bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();
-        bn::fixed objectB_radius = (objectB.shape_size().width() / 2) * objectB.horizontal_scale();
-        bn::fixed max_distance = (objectA_radius + objectB_radius) * (objectA_radius + objectB_radius);
-
-        bn::fixed distanceX = objectB.x() - objectA.x();
-        bn::fixed distanceY = objectB.y() - objectA.y();
-        bn::fixed distance = distanceX * distanceX + distanceY * distanceY;
-
-        return (distance < max_distance);
-    }
-
     inline bn::vector<bn::fixed_point, MAX_NEIGHBORING_BLOCKS> getTiles(bn::sprite_ptr& sprite)
     {
         int x0 = int(sprite.x()) / Block::SIZE;

@@ -29,12 +29,12 @@ Enemy::Enemy(int x, int y, EnemyType t) : type(t),
 }
 
 bool Enemy::isColliding(Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies) {
-    if (Utils::collision(sprite, player.sprite)) {
+    if (rect.intersects(player.rect)) {
         return true;
     }
 
     for (auto& otherenemy : enemies) {
-        if (this != &otherenemy && Utils::collision(sprite, otherenemy.sprite)) {
+        if (this != &otherenemy && rect.intersects(otherenemy.rect)) {
             return true;
         }
     }
@@ -53,6 +53,7 @@ void Enemy::respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::
         do {
             enemy_x = random_spawn.get_int(-RESPAWN_RANGE, RESPAWN_RANGE);
             new_enemy.sprite.set_x(enemy_x+camera.x());
+            new_enemy.rect.set_position(new_enemy.sprite.position());
         }
         while (new_enemy.isColliding(player, enemies));
 
@@ -95,7 +96,7 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
     sprite.set_x(sprite.x() + steps);
     sprite.set_y(sprite.y() + fallingSpeed);
 
-    if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(sprite, player.sprite)){
+    if (framesSinceLastHit > INVINCIBILITY_FRAMES && rect.intersects(player.rect)){
         framesSinceLastHit=0;
         player.hit();
         player.sprite.set_blending_enabled(true);
