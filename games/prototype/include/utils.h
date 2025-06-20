@@ -13,6 +13,7 @@ namespace Utils{
     constexpr int DEATH_PANE = 90;
     constexpr int MAX_BULLETS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
+    constexpr int MAX_NEIGHBORING_BLOCKS = 25;
 
     inline bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
         bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();
@@ -26,12 +27,12 @@ namespace Utils{
         return (distance < max_distance);
     }
 
-    inline bn::vector<bn::fixed_point, 25> getTiles(bn::sprite_ptr& sprite)
+    inline bn::vector<bn::fixed_point, MAX_NEIGHBORING_BLOCKS> getTiles(bn::sprite_ptr& sprite)
     {
         int x0 = int(sprite.x()) / Block::SIZE;
         int y0 = int(sprite.y()) / Block::SIZE;
 
-        bn::vector<bn::fixed_point, 25> tiles;
+        bn::vector<bn::fixed_point, MAX_NEIGHBORING_BLOCKS> tiles;
 
         int border = sprite.shape_size().width() / Block::SIZE;
 
