@@ -3,6 +3,7 @@
 #include "bn_sprite_items_monsters_scaled.h"
 
 using Utils::INVINCIBILITY_FRAMES;
+using Utils::GRAVITY;
 
 constexpr int RESPAWN_TIMER = 100;
 constexpr int SPEED = 1;
@@ -17,7 +18,8 @@ Enemy::Enemy(int x, int y, EnemyType t) : type(t),
         sprite, 16, bn::sprite_items::monsters_scaled.tiles_item(),
         type == EnemyType::DINO ? 0 : 3,
         type == EnemyType::DINO ? 1 : 4,
-        type == EnemyType::DINO ? 2 : 5))
+        type == EnemyType::DINO ? 2 : 5)),
+    rect(sprite.position(),sprite.dimensions())
 {
     spawnX = sprite.x();
 }
@@ -56,7 +58,7 @@ void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,M
     }
 }
 
-void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
+void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks){
     int steps = 0;
 
     if(type==EnemyType::DINO){
@@ -87,6 +89,7 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& fr
     }
 
     sprite.set_x(sprite.x() + steps);
+    sprite.set_y(sprite.y() + fallingSpeed);
 
     if (framesSinceLastHit > INVINCIBILITY_FRAMES && Utils::collision(sprite, player.sprite)){
         framesSinceLastHit=0;
@@ -99,15 +102,69 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& fr
     }
 
     sprite.set_horizontal_flip(!lookingRight);
+
+    bn::fixed_rect prev_rect = rect;
+    rect.set_position(sprite.position());
+
+    bool standingOnBlock = false;
+
+    for(auto& tile : Utils::getTiles(sprite)){
+        if(blocks.contains(tile)){
+            auto& block = blocks.at(tile);
+
+            if(rect.intersects(block.rect)){
+                bool fromAbove = prev_rect.bottom() <= block.rect.top();
+
+                if (fromAbove) {
+                    sprite.set_y(block.rect.top() - sprite.dimensions().height() / 2);
+                    standingOnBlock = true;
+                }
+
+                bool fromLeft = prev_rect.right() <= block.rect.left();
+                bool fromRight = prev_rect.left() >= block.rect.right();
+
+                if (fromLeft) {
+                    sprite.set_x(block.rect.left() - sprite.dimensions().width() / 2);
+                }
+                else if (fromRight) {
+                    sprite.set_x(block.rect.right() + sprite.dimensions().width() / 2);
+                }
+            }
+
+            rect.set_position(sprite.position());
+        }
+    }
+
+    if (standingOnBlock) {
+        fallingSpeed = 0;
+    }
+    else{
+        fallingSpeed += GRAVITY;
+    }
+
+    if(sprite.y() > DEATH_PANE){
+        hit_points=0;
+    }
 }
 
-void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
+void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks){
     framesSinceLastHit++;
     if(framesSinceLastHit > INVINCIBILITY_FRAMES){
         player.sprite.set_blending_enabled(false);
     }
 
     for (auto& enemy : enemies){
-        enemy.move(player,enemies,framesSinceLastHit);
+        enemy.move(player,enemies,framesSinceLastHit,blocks);
+    }
+}
+
+void Enemy::removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn){
+    for (int i = 0; i < enemies.size(); i++) {
+        auto& enemy = enemies[i];
+        if (enemy.hit_points == 0) {
+            enemies.erase(enemies.begin() + i);
+            i--;
+            framesBeforeRespawn=0;
+        }
     }
 }

@@ -19,6 +19,8 @@ struct Enemy {
     bn::sprite_animate_action<3> animate_action;
     bn::fixed spawnX;
     bool lookingRight = false;
+    bn::fixed_rect rect;
+    bn::fixed fallingSpeed = 0;
 
     Enemy(int x, int y, EnemyType t);
 
@@ -26,9 +28,11 @@ struct Enemy {
 
     static void respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera, bn::random& random);
 
-    void move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit);
+    void move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks);
 
-    static void moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit);
+    static void moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit, BlockMap& blocks);
+
+    static void removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn);
 };
 
 #endif // ENEMY_H

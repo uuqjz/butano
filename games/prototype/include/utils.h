@@ -14,6 +14,8 @@ namespace Utils{
     constexpr int MAX_BULLETS = 5;
     constexpr int INVINCIBILITY_FRAMES = 100;
     constexpr int MAX_NEIGHBORING_BLOCKS = 25;
+    constexpr bn::fixed GRAVITY = 0.5;
+
 
     inline bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
         bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();

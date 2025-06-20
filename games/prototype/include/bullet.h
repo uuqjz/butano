@@ -19,7 +19,7 @@ struct Bullet {
 
     void update();
 
-    void hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn);
+    void hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies);
 
     static void spawnAndMove(bn::vector<Bullet, MAX_BULLETS>& bullets, Player& player);
 };

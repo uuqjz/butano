@@ -6,6 +6,8 @@
 #include "bn_sprite_items_ninja.h"
 #include "bn_sprite_items_head.h"
 
+using Utils::GRAVITY;
+
 Player::Player(int x, int y) : sprite(bn::sprite_items::ninja.create_sprite(x, y)),
     palette(sprite.palette()),
     animate_action(bn::create_sprite_animate_action_forever(

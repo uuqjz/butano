@@ -13,10 +13,9 @@ using Utils::DEATH_PANE;
 struct Player {
     static constexpr int DISTANCE = 3;
     static constexpr bn::fixed JUMP_VELOCITY = -10;
-    static constexpr bn::fixed GRAVITY = 0.5;
     static constexpr bn::fixed AIR_RESISTANCE = 0.95;
     static constexpr bn::fixed BOUNCE_FACTOR = 0.75f;
-    static constexpr int CAMERA_BORDER_X = 100;
+    static constexpr int CAMERA_BORDER_X = 60;
     static constexpr int CAMERA_BORDER_Y = GROUND_LEVEL;
     static constexpr int JUMP_GRACE_PERIOD = 3;
     static constexpr int HIT_POINTS = 5;

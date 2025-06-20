@@ -27,21 +27,13 @@ void Bullet::update() {
     }
 }
 
-void Bullet::hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn){
+void Bullet::hitDetection(bn::vector<Enemy,MAX_ENEMIES>& enemies){
     if (active) {
-        for (int i = 0; i < enemies.size(); i++) {
-            auto& enemy = enemies[i];
-
+        for (auto& enemy : enemies){
             if (Utils::collision(sprite,enemy.sprite)) {
                 enemy.hit_points--;
                 active = false;
                 sprite.set_visible(false);
-
-                if (enemy.hit_points == 0) {
-                    enemies.erase(enemies.begin() + i);
-                    i--;
-                    framesBeforeRespawn=0;
-                }
             }
         }
     }

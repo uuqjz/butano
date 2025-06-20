@@ -74,6 +74,9 @@ int main()
     blocks.insert(5,-2);
     blocks.insert(6,-2);
     blocks.insertLine(-20,20,5);
+    blocks.insert(-2,4);
+    blocks.insert(-23,5);
+    blocks.insert(-24,5);
 
     int framesBeforeRespawn=0;
     int framesSinceLastHit=INVINCIBILITY_FRAMES;
@@ -106,13 +109,15 @@ int main()
         Bullet::spawnAndMove(bullets,player);
 
         for (auto& bullet : bullets) {
-            bullet.hitDetection(enemies, framesBeforeRespawn);
+            bullet.hitDetection(enemies);
         }
+
+        Enemy::removeDead(enemies,framesBeforeRespawn);
 
         Enemy::respawn(framesBeforeRespawn,player,enemies,camera,random);
 
         if(enemiesActive){
-            Enemy::moveAll(player,enemies,framesSinceLastHit);
+            Enemy::moveAll(player,enemies,framesSinceLastHit,blocks);
         }
 
         for(auto& enemy : enemies){
