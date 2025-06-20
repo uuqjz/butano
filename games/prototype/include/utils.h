@@ -42,7 +42,7 @@ namespace Utils{
 
         bn::vector<bn::fixed_point, MAX_NEIGHBORING_BLOCKS> tiles;
 
-        int border = sprite.shape_size().width() / Block::SIZE;
+        int border = bn::max(sprite.shape_size().width() / Block::SIZE, 1);
 
         for(int x = x0 - border ; x<= x0 + border; x++){
             for(int y = y0 - border ; y<= y0 + border; y++){
