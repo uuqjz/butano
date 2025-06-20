@@ -45,7 +45,7 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
 
     bool standingOnBlock = false;
 
-    for(auto& tile : getTiles()){
+    for(auto& tile : Utils::getTiles(sprite)){
         if(blocks.contains(tile)){
             auto& block = blocks.at(tile);
 
@@ -130,22 +130,6 @@ void Player::move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks){
     if(sprite.y() > DEATH_PANE){
         hearts.clear();
     }
-}
-
-bn::vector<bn::fixed_point, 9> Player::getTiles()
-{
-    int x0 = int(sprite.x()) / Block::SIZE;
-    int y0 = int(sprite.y()) / Block::SIZE;
-
-    bn::vector<bn::fixed_point, 9> tiles;
-
-    for(int x = x0 -1 ; x<= x0+1; x++){
-        for(int y = y0 -1 ; y<= y0+1; y++){
-            tiles.push_back(bn::fixed_point(x,y));
-        }
-    }
-
-    return tiles;
 }
 
 int Player::hitPoints(){

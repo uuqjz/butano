@@ -36,8 +36,6 @@ struct Player {
 
     void move(bool bounce, bn::camera_ptr& camera, BlockMap& blocks);
 
-    bn::vector<bn::fixed_point, 9> getTiles();
-
     int hitPoints();
 
     void hit();

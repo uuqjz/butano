@@ -1,9 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "block.h"
 #include "bn_fixed_fwd.h"
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_shape_size.h"
+#include "bn_vector.h"
 
 namespace Utils{
     constexpr int MAX_ENEMIES = 2;
@@ -22,6 +24,24 @@ namespace Utils{
         bn::fixed distance = distanceX * distanceX + distanceY * distanceY;
 
         return (distance < max_distance);
+    }
+
+    inline bn::vector<bn::fixed_point, 25> getTiles(bn::sprite_ptr& sprite)
+    {
+        int x0 = int(sprite.x()) / Block::SIZE;
+        int y0 = int(sprite.y()) / Block::SIZE;
+
+        bn::vector<bn::fixed_point, 9> tiles;
+
+        int border = sprite.shape_size().width() / Block::SIZE;
+
+        for(int x = x0 - border ; x<= x0 + border; x++){
+            for(int y = y0 - border ; y<= y0 + border; y++){
+                tiles.push_back(bn::fixed_point(x,y));
+            }
+        }
+
+        return tiles;
     }
 }
 

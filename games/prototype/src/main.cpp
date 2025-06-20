@@ -2,7 +2,6 @@
 #include "bn_bg_palettes.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_keypad.h"
-#include "bn_log.h"
 
 #include "common_info.h"
 #include "common_variable_8x16_sprite_font.h"

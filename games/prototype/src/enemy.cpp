@@ -1,6 +1,6 @@
 #include "enemy.h"
 #include "bn_sprite_item.h"
-#include "bn_sprite_items_monsters_grounded.h"
+#include "bn_sprite_items_monsters_scaled.h"
 
 using Utils::INVINCIBILITY_FRAMES;
 
@@ -11,15 +11,14 @@ constexpr int OSCILLATION_RANGE = 15;
 constexpr int OFFSET = -8;
 
 Enemy::Enemy(int x, int y, EnemyType t) : type(t),
-    sprite(bn::sprite_items::monsters_grounded.create_sprite(x, y + OFFSET)),
+    sprite(bn::sprite_items::monsters_scaled.create_sprite(x, y + OFFSET)),
     palette(sprite.palette()),
     animate_action(bn::create_sprite_animate_action_forever(
-        sprite, 16, bn::sprite_items::monsters_grounded.tiles_item(),
+        sprite, 16, bn::sprite_items::monsters_scaled.tiles_item(),
         type == EnemyType::DINO ? 0 : 3,
         type == EnemyType::DINO ? 1 : 4,
         type == EnemyType::DINO ? 2 : 5))
 {
-    sprite.set_scale(0.5f);
     spawnX = sprite.x();
 }
 
