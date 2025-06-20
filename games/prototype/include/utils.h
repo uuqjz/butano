@@ -31,7 +31,7 @@ namespace Utils{
         int x0 = int(sprite.x()) / Block::SIZE;
         int y0 = int(sprite.y()) / Block::SIZE;
 
-        bn::vector<bn::fixed_point, 9> tiles;
+        bn::vector<bn::fixed_point, 25> tiles;
 
         int border = sprite.shape_size().width() / Block::SIZE;
 
