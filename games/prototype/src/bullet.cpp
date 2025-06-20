@@ -1,14 +1,14 @@
 #include "bullet.h"
 #include "bn_keypad.h"
 #include "bn_math.h"
-#include "bn_sprite_items_rocket_scaled.h"
+#include "bn_sprite_items_rocket.h"
 
 using Utils::blocks;
 
 constexpr bn::fixed SPEED = 2.0f;
 constexpr int MAX_DISTANCE = 100;
 
-Bullet::Bullet(int x, int y) : sprite(bn::sprite_items::rocket_scaled.create_sprite(x, y)),
+Bullet::Bullet(int x, int y) : sprite(bn::sprite_items::rocket.create_sprite(x, y)),
     rect(sprite.position(),sprite.dimensions()) {
     sprite.set_visible(false);
 }
