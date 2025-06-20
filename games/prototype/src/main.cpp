@@ -9,7 +9,7 @@
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_palette_ptr.h"
 #include "bn_sprite_animate_actions.h"
-#include "bn_sprite_items_rocket.h"
+#include "bn_sprite_items_rocket_scaled.h"
 #include "bn_blending.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
@@ -55,8 +55,7 @@ int main()
     bn::vector<Bullet, MAX_BULLETS> bullets;
 
     for(int i = 0; i < MAX_BULLETS; i++) {
-        bullets.push_back({bn::sprite_items::rocket.create_sprite(0, GROUND_LEVEL)});
-        bullets[i].sprite.set_scale(0.5);
+        bullets.push_back({bn::sprite_items::rocket_scaled.create_sprite(0, GROUND_LEVEL)});
         bullets[i].sprite.set_visible(false);
         bullets[i].sprite.set_camera(camera);
     }
