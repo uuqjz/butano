@@ -31,6 +31,9 @@ using Utils::INVINCIBILITY_FRAMES;
 
 namespace Utils {
     BlockMap blocks;
+    int framesBeforeRespawn=0;
+    int framesSinceLastHit=INVINCIBILITY_FRAMES;
+    bn::random random_spawn;
 }
 
 using Utils::blocks;
@@ -78,9 +81,6 @@ int main()
     blocks.insert(-23,5);
     blocks.insert(-24,5);
 
-    int framesBeforeRespawn=0;
-    int framesSinceLastHit=INVINCIBILITY_FRAMES;
-
     player.sprite.set_camera(camera);
     for(auto& enemy:enemies){
         enemy.sprite.set_camera(camera);
@@ -91,8 +91,6 @@ int main()
 
     bool bounce = Save::read();
     bool enemiesActive = false;
-
-    bn::random random;
 
     while (player.hitPoints()>0) {
         if(bn::keypad::start_pressed()){
@@ -112,12 +110,12 @@ int main()
             bullet.hitDetection(enemies);
         }
 
-        Enemy::removeDead(enemies,framesBeforeRespawn);
+        Enemy::removeDead(enemies);
 
-        Enemy::respawn(framesBeforeRespawn,player,enemies,camera,random);
+        Enemy::respawn(player,enemies,camera);
 
         if(enemiesActive){
-            Enemy::moveAll(player,enemies,framesSinceLastHit);
+            Enemy::moveAll(player,enemies);
         }
 
         for(auto& enemy : enemies){

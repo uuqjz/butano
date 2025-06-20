@@ -5,6 +5,9 @@
 using Utils::INVINCIBILITY_FRAMES;
 using Utils::GRAVITY;
 using Utils::blocks;
+using Utils::framesBeforeRespawn;
+using Utils::framesSinceLastHit;
+using Utils::random_spawn;
 
 constexpr int RESPAWN_TIMER = 100;
 constexpr int SPEED = 1;
@@ -39,16 +42,16 @@ bool Enemy::isColliding(Player& player, bn::vector<Enemy, MAX_ENEMIES>& enemies)
     return false;
 }
 
-void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera, bn::random& random){
+void Enemy::respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
     framesBeforeRespawn++;
     if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
-        bool dino = (random.get_int(2) == 0);
+        bool dino = (random_spawn.get_int(2) == 0);
         Enemy new_enemy(0, GROUND_LEVEL, dino ? EnemyType::DINO : EnemyType::TURTLE);
         new_enemy.sprite.set_camera(camera);
 
         int enemy_x;
         do {
-            enemy_x = random.get_int(-RESPAWN_RANGE, RESPAWN_RANGE);
+            enemy_x = random_spawn.get_int(-RESPAWN_RANGE, RESPAWN_RANGE);
             new_enemy.sprite.set_x(enemy_x+camera.x());
         }
         while (new_enemy.isColliding(player, enemies));
@@ -59,7 +62,7 @@ void Enemy::respawn(int& framesBeforeRespawn, Player& player, bn::vector<Enemy,M
     }
 }
 
-void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
+void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
     int steps = 0;
 
     if(type==EnemyType::DINO){
@@ -148,18 +151,18 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& fr
     }
 }
 
-void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesSinceLastHit){
+void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
     framesSinceLastHit++;
     if(framesSinceLastHit > INVINCIBILITY_FRAMES){
         player.sprite.set_blending_enabled(false);
     }
 
     for (auto& enemy : enemies){
-        enemy.move(player,enemies,framesSinceLastHit);
+        enemy.move(player,enemies);
     }
 }
 
-void Enemy::removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies, int& framesBeforeRespawn){
+void Enemy::removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies){
     for (int i = 0; i < enemies.size(); i++) {
         auto& enemy = enemies[i];
         if (enemy.hit_points == 0) {

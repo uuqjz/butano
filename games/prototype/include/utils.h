@@ -7,6 +7,7 @@
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_shape_size.h"
 #include "bn_vector.h"
+#include "bn_random.h"
 
 namespace Utils{
     constexpr int MAX_ENEMIES = 2;
@@ -18,6 +19,9 @@ namespace Utils{
     constexpr bn::fixed GRAVITY = 0.5;
 
     extern BlockMap blocks;
+    extern int framesBeforeRespawn;
+    extern int framesSinceLastHit;
+    extern bn::random random_spawn;
 
     inline bool collision(bn::sprite_ptr& objectA, bn::sprite_ptr& objectB){
         bn::fixed objectA_radius = (objectA.shape_size().width() / 2) * objectA.horizontal_scale();
