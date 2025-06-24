@@ -6,7 +6,6 @@
 #include "player.h"
 #include "utils.h"
 #include "enemytype.h"
-#include "bn_camera_ptr.h"
 
 using Utils::MAX_ENEMIES;
 
@@ -27,13 +26,7 @@ struct Enemy {
 
     bool collidesWithBlock();
 
-    static void respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera);
-
     void move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies);
-
-    static void moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies);
-
-    static void removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies);
 };
 
 #endif // ENEMY_H

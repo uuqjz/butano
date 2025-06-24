@@ -9,12 +9,12 @@
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_palette_ptr.h"
 #include "bn_sprite_animate_actions.h"
-#include "bn_sprite_items_rocket_scaled.h"
 #include "bn_blending.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_regular_bg_items_clouds.h"
 #include "bn_random.h"
 
+#include "enemymanager.h"
 #include "utils.h"
 #include "block.h"
 #include "blockmap.h"
@@ -22,12 +22,10 @@
 #include "save.h"
 #include "bullet.h"
 #include "enemytype.h"
-#include "enemy.h"
 
 using Utils::GROUND_LEVEL;
 using Utils::MAX_ENEMIES;
 using Utils::MAX_BULLETS;
-using Utils::INVINCIBILITY_FRAMES;
 
 namespace Utils {
     BlockMap blocks;
@@ -61,9 +59,9 @@ int main()
 
     Player player = {0, GROUND_LEVEL};
 
-    bn::vector<Enemy,MAX_ENEMIES> enemies;
-    enemies.push_back({-100,GROUND_LEVEL,EnemyType::DINO});
-    enemies.push_back({100,GROUND_LEVEL,EnemyType::TURTLE});
+    EnemyManager enemyManager;
+    enemyManager.add(-100,GROUND_LEVEL,EnemyType::DINO);
+    enemyManager.add(100,GROUND_LEVEL,EnemyType::TURTLE);
 
     blocks.insert(-1,1);
     blocks.insert(1,1);
@@ -80,9 +78,7 @@ int main()
     blocks.insert(-24,5);
 
     player.sprite.set_camera(camera);
-    for(auto& enemy:enemies){
-        enemy.sprite.set_camera(camera);
-    }
+    enemyManager.set_camera(camera);
     for(auto& block:blocks.getAllBlocks()){
         block.sprite.set_camera(camera);
     }
@@ -105,20 +101,18 @@ int main()
         Bullet::spawnAndMove(bullets,player);
 
         for (auto& bullet : bullets) {
-            bullet.hitDetection(enemies);
+            bullet.hitDetection(enemyManager.enemies);
         }
 
-        Enemy::removeDead(enemies);
+        enemyManager.removeDead();
 
-        Enemy::respawn(player,enemies,camera);
+        enemyManager.respawn(player,camera);
 
         if(enemiesActive){
-            Enemy::moveAll(player,enemies);
+            enemyManager.move(player);
         }
 
-        for(auto& enemy : enemies){
-            enemy.animate_action.update();
-        }
+        enemyManager.update();
 
         player.animate_action.update();
         bn::core::update();

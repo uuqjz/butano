@@ -5,13 +5,9 @@
 using Utils::INVINCIBILITY_FRAMES;
 using Utils::GRAVITY;
 using Utils::blocks;
-using Utils::framesBeforeRespawn;
 using Utils::framesSinceLastHit;
-using Utils::random_spawn;
 
-constexpr int RESPAWN_TIMER = 100;
 constexpr int SPEED = 1;
-constexpr int RESPAWN_RANGE = 100;
 constexpr int OSCILLATION_RANGE = 15;
 constexpr int OFFSET = -8;
 
@@ -54,27 +50,6 @@ bool Enemy::collidesWithBlock(){
     }
 
     return false;
-}
-
-void Enemy::respawn(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies, bn::camera_ptr& camera){
-    framesBeforeRespawn++;
-    if (enemies.size() < MAX_ENEMIES && framesBeforeRespawn > RESPAWN_TIMER) {
-        bool dino = (random_spawn.get_int(2) == 0);
-        Enemy new_enemy(0, GROUND_LEVEL, dino ? EnemyType::DINO : EnemyType::TURTLE);
-        new_enemy.sprite.set_camera(camera);
-
-        int enemy_x;
-        do {
-            enemy_x = random_spawn.get_int(-RESPAWN_RANGE, RESPAWN_RANGE);
-            new_enemy.sprite.set_x(enemy_x+camera.x());
-            new_enemy.rect.set_position(new_enemy.sprite.position());
-        }
-        while (new_enemy.isColliding(player, enemies) || new_enemy.collidesWithBlock());
-
-        new_enemy.spawnX = new_enemy.sprite.x();
-        enemies.push_back(new_enemy);
-        framesBeforeRespawn = 0;
-    }
 }
 
 void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
@@ -163,27 +138,5 @@ void Enemy::move(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
 
     if(sprite.y() > DEATH_PANE){
         hit_points=0;
-    }
-}
-
-void Enemy::moveAll(Player& player, bn::vector<Enemy,MAX_ENEMIES>& enemies){
-    framesSinceLastHit++;
-    if(framesSinceLastHit > INVINCIBILITY_FRAMES){
-        player.sprite.set_blending_enabled(false);
-    }
-
-    for (auto& enemy : enemies){
-        enemy.move(player,enemies);
-    }
-}
-
-void Enemy::removeDead(bn::vector<Enemy,MAX_ENEMIES>& enemies){
-    for (int i = 0; i < enemies.size(); i++) {
-        auto& enemy = enemies[i];
-        if (enemy.hit_points == 0) {
-            enemies.erase(enemies.begin() + i);
-            i--;
-            framesBeforeRespawn=0;
-        }
     }
 }
